@@ -224,63 +224,6 @@
     color: var(--ink-faint);
   }
 
-  /* "or paste" alternative below the drop zone */
-  .drop-alt {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    margin-top: 18px;
-    font-family: var(--mono);
-    font-size: 10.5px;
-    text-transform: uppercase;
-    letter-spacing: 0.18em;
-    color: var(--ink-faint);
-  }
-  .drop-alt::before,
-  .drop-alt::after {
-    content: '';
-    flex: 1;
-    max-width: 40px;
-    height: 1px;
-    background: var(--line);
-  }
-  .paste-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    margin: 14px auto 0;
-    padding: 14px 22px;
-    height: 52px;
-    border-radius: 14px;
-    border: 1px solid var(--line-2);
-    background: var(--bg-1);
-    color: var(--ink);
-    font-family: var(--sans);
-    font-weight: 500;
-    font-size: 15px;
-    cursor: pointer;
-    transition: all 0.15s;
-    width: 100%;
-    justify-content: center;
-  }
-  .paste-btn:active {
-    transform: scale(0.98);
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-  .paste-btn svg { color: var(--ink-dim); transition: color 0.15s; }
-  .paste-btn:active svg { color: var(--accent); }
-  .paste-hint {
-    font-family: var(--mono);
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
-    color: var(--ink-faint);
-    text-align: center;
-    margin-top: 10px;
-  }
-
   /* Creator-mode load card */
   .load-card {
     border: 1px solid var(--line);
@@ -707,7 +650,7 @@
     background: var(--bg-1);
     border: 1px solid var(--line);
     border-radius: 18px;
-    padding: 0 10px 10px;
+    padding: 10px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.5);
   }
   .controls-row {
@@ -749,92 +692,6 @@
     border-color: var(--accent);
   }
   .skip-btn:disabled { opacity: 0.4; pointer-events: none; }
-
-  /* Volume row (separate row above main controls) */
-  .vol-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 6px 14px 10px;
-    border-bottom: 1px solid var(--line);
-    margin-bottom: 10px;
-  }
-  .vol-btn {
-    width: 36px; height: 36px;
-    border: none;
-    background: transparent;
-    color: var(--ink-dim);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    border-radius: 8px;
-    flex-shrink: 0;
-    transition: color 0.15s, background 0.15s;
-  }
-  .vol-btn:active { color: var(--accent); background: rgba(255,107,31,0.08); }
-  .vol-btn.muted { color: var(--danger); }
-
-  /* Range slider — custom themed */
-  .vol-slider {
-    flex: 1;
-    -webkit-appearance: none;
-    appearance: none;
-    height: 28px; /* generous tap target */
-    background: transparent;
-    cursor: pointer;
-    margin: 0;
-    padding: 0;
-    touch-action: manipulation;
-  }
-  .vol-slider::-webkit-slider-runnable-track {
-    height: 4px;
-    background: linear-gradient(
-      to right,
-      var(--accent) 0%,
-      var(--accent) var(--vol-pct, 100%),
-      var(--line-2) var(--vol-pct, 100%),
-      var(--line-2) 100%
-    );
-    border-radius: 2px;
-  }
-  .vol-slider::-moz-range-track {
-    height: 4px;
-    background: var(--line-2);
-    border-radius: 2px;
-  }
-  .vol-slider::-moz-range-progress {
-    height: 4px;
-    background: var(--accent);
-    border-radius: 2px;
-  }
-  .vol-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px; height: 20px;
-    border-radius: 50%;
-    background: var(--ink);
-    border: 3px solid var(--bg-1);
-    margin-top: -8px;
-    cursor: grab;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-    transition: transform 0.15s;
-  }
-  .vol-slider::-moz-range-thumb {
-    width: 20px; height: 20px;
-    border-radius: 50%;
-    background: var(--ink);
-    border: 3px solid var(--bg-1);
-    cursor: grab;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-  }
-  .vol-slider:active::-webkit-slider-thumb { transform: scale(1.2); }
-  .vol-pct-label {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--ink-faint);
-    min-width: 32px;
-    text-align: right;
-    letter-spacing: 0.04em;
-  }
 
   .add-btn {
     flex: 1;
@@ -1170,12 +1027,12 @@
   /* Mobile-specific tweaks */
   @media (max-width: 640px) {
     .header { padding: 14px 18px 6px; }
-    main { padding: 16px 18px 180px; } /* extra room for two-row controls */
+    main { padding: 16px 18px 130px; }
     .wave-wrap { padding: 22px 14px 14px; }
     .pins { left: 14px; right: 14px; top: 22px; bottom: 14px; }
     .share-btn { padding: 0 16px; font-size: 14px; }
     .controls-row { gap: 8px; }
-    .controls-inner { padding: 0 8px 8px; }
+    .controls-inner { padding: 8px; }
     .skip-btn { width: 44px; }
   }
 
@@ -1302,11 +1159,6 @@ const ICONS = {
   check: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
   back5: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 8a7 7 0 1 1-7 7"/><polyline points="5.5 3 5.5 8 10.5 8"/><text x="12" y="16" font-family="JetBrains Mono, monospace" font-size="7" font-weight="700" fill="currentColor" stroke="none" text-anchor="middle">5</text></svg>`,
   fwd5: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 8a7 7 0 1 0 7 7"/><polyline points="18.5 3 18.5 8 13.5 8"/><text x="12" y="16" font-family="JetBrains Mono, monospace" font-size="7" font-weight="700" fill="currentColor" stroke="none" text-anchor="middle">5</text></svg>`,
-  volHigh: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`,
-  volMid: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`,
-  volLow: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/></svg>`,
-  volMute: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`,
-  clipboard: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>`,
 };
 
 /* ---------- URL encode/decode ---------- */
@@ -1340,11 +1192,9 @@ function boot() {
     state.expectedName = decoded.filename;
     state.comments = decoded.comments;
     renderCreatorIntro();
-    wireGlobalPaste(handleCreatorFile);
   } else {
     state.mode = 'reviewer';
     renderReviewerIntro();
-    wireGlobalPaste(handleReviewerFile);
   }
   $('#modeTag').textContent = state.mode === 'reviewer' ? 'Reviewer' : 'Listener';
   $('#modeTag').classList.toggle('live', state.mode === 'creator');
@@ -1362,20 +1212,13 @@ function renderReviewerIntro() {
       <div class="drop" id="drop">
         <div class="drop-inner">
           <div class="drop-icon">${ICONS.upload}</div>
-          <div class="drop-title">Drop an audio file</div>
+          <div class="drop-title">Choose an audio file</div>
           <div class="drop-sub">MP3 · WAV · OGG · FLAC · M4A</div>
         </div>
       </div>
-      <div class="drop-alt">or</div>
-      <button class="paste-btn" id="pasteBtn">
-        ${ICONS.clipboard}
-        <span>Paste from clipboard</span>
-      </button>
-      <div class="paste-hint">On iOS, save the file to Files app first · desktop browsers paste directly</div>
     </section>
   `;
   wireDropZone(handleReviewerFile);
-  wirePasteButton(handleReviewerFile);
 }
 
 /* ============================================================
@@ -1406,16 +1249,10 @@ function renderCreatorIntro() {
           <div class="drop-sub">to play the review</div>
         </div>
       </div>
-      <div class="drop-alt">or</div>
-      <button class="paste-btn" id="pasteBtn">
-        ${ICONS.clipboard}
-        <span>Paste from clipboard</span>
-      </button>
       <div id="fileErr"></div>
     </section>
   `;
   wireDropZone(handleCreatorFile);
-  wirePasteButton(handleCreatorFile);
 }
 
 function escapeHtml(s) {
@@ -1448,14 +1285,7 @@ function wireDropZone(onFile) {
   };
 }
 
-/* ---------- Paste handling ----------
-   Supports three input paths:
-   1. Tapping the "Paste from clipboard" button → navigator.clipboard.read()
-      (modern browsers + iOS Safari 16.4+)
-   2. Global Cmd+V / Ctrl+V → e.clipboardData.files
-   3. Pasted text that turns out to be a URL pointing to an audio file →
-      fetched as a blob (handles edge cases like blob: URLs or data: URLs)
-*/
+/* ---------- Audio file helpers ---------- */
 function isAudioFile(file) {
   if (!file) return false;
   if (file.type && file.type.startsWith('audio/')) return true;
@@ -1465,196 +1295,18 @@ function isAudioFile(file) {
   return /\.(mp3|wav|wave|ogg|oga|flac|m4a|m4b|aac|wma|opus|aif|aiff|weba|webm|mp4)$/i.test(file.name || '');
 }
 
-function inferFilename(blob, fallback = 'clipboard-audio') {
-  // Try to guess an extension from the MIME type
-  const mime = (blob.type || '').toLowerCase();
+function inferFilename(file, fallback = 'track') {
+  // Used only when a picked file somehow has no name; guesses an extension from MIME type
+  const mime = (file.type || '').toLowerCase();
   const extMap = {
-    'audio/mpeg': 'mp3',
-    'audio/mp3': 'mp3',
-    'audio/wav': 'wav',
-    'audio/wave': 'wav',
-    'audio/x-wav': 'wav',
-    'audio/ogg': 'ogg',
-    'audio/flac': 'flac',
-    'audio/x-flac': 'flac',
-    'audio/mp4': 'm4a',
-    'audio/x-m4a': 'm4a',
-    'audio/aac': 'aac',
+    'audio/mpeg': 'mp3', 'audio/mp3': 'mp3',
+    'audio/wav': 'wav', 'audio/wave': 'wav', 'audio/x-wav': 'wav',
+    'audio/ogg': 'ogg', 'audio/flac': 'flac', 'audio/x-flac': 'flac',
+    'audio/mp4': 'm4a', 'audio/x-m4a': 'm4a', 'audio/aac': 'aac',
     'audio/webm': 'webm',
   };
   const ext = extMap[mime] || 'mp3';
   return `${fallback}.${ext}`;
-}
-
-async function tryClipboardRead(onFile) {
-  if (!navigator.clipboard || !navigator.clipboard.read) {
-    toast('Paste not supported in this browser');
-    return false;
-  }
-  try {
-    const items = await navigator.clipboard.read();
-    if (!items || items.length === 0) {
-      toast('Clipboard is empty');
-      return false;
-    }
-
-    // Collect every MIME type we see across all items for diagnostics
-    const allTypes = [];
-    for (const item of items) {
-      for (const t of item.types) allTypes.push(t);
-    }
-    console.log('[Tape] Clipboard MIME types available:', allTypes);
-
-    // Pass 1: look for any audio MIME type
-    for (const item of items) {
-      const audioType = item.types.find(t => t.startsWith('audio/'));
-      if (audioType) {
-        const blob = await item.getType(audioType);
-        const filename = inferFilename(blob,
-          state.mode === 'creator' ? state.expectedName.replace(/\.[^.]+$/, '') : 'pasted-audio');
-        const file = new File([blob], filename, { type: blob.type });
-        onFile(file, { fromPaste: true });
-        return true;
-      }
-    }
-
-    // Pass 2: look for ANY non-text type that could plausibly be a file blob
-    // (Safari sometimes exposes audio as application/octet-stream or similar)
-    for (const item of items) {
-      const fileType = item.types.find(t =>
-        t === 'application/octet-stream' ||
-        t.startsWith('application/') && (t.includes('mp4') || t.includes('mpeg') || t.includes('ogg')) ||
-        t === 'video/mp4' // M4A audio is sometimes labeled video/mp4
-      );
-      if (fileType) {
-        try {
-          const blob = await item.getType(fileType);
-          // Verify it's actually audio by checking the first bytes
-          if (await looksLikeAudio(blob)) {
-            const filename = inferFilename(blob,
-              state.mode === 'creator' ? state.expectedName.replace(/\.[^.]+$/, '') : 'pasted-audio');
-            const file = new File([blob], filename, { type: blob.type || 'audio/mpeg' });
-            onFile(file, { fromPaste: true });
-            return true;
-          }
-        } catch (e) {
-          console.warn('[Tape] Tried', fileType, 'but failed:', e);
-        }
-      }
-    }
-
-    // Pass 3: text — could be a URL or a file path
-    for (const item of items) {
-      if (item.types.includes('text/plain')) {
-        const textBlob = await item.getType('text/plain');
-        const text = (await textBlob.text()).trim();
-        if (text && await tryFetchUrlAsAudio(text, onFile)) return true;
-      }
-    }
-
-    // Nothing worked — show the user what was actually there so they know why
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    if (isIOS) {
-      toast('iOS hides audio from web clipboard · save to Files first, then pick it', 5500);
-    } else {
-      const typesShown = allTypes.length > 0
-        ? allTypes.slice(0, 3).join(', ') + (allTypes.length > 3 ? '…' : '')
-        : 'nothing';
-      toast(`No audio found · clipboard had: ${typesShown}`, 4500);
-    }
-    return false;
-  } catch (err) {
-    console.warn('Clipboard read failed:', err);
-    if (err.name === 'NotAllowedError') {
-      toast('Clipboard access denied');
-    } else if (err.name === 'NotFoundError') {
-      toast('Clipboard is empty');
-    } else {
-      toast('Could not read clipboard');
-    }
-    return false;
-  }
-}
-
-/* Sniff the first bytes of a blob to see if it looks like audio.
-   Useful when the clipboard hands us an opaque application/octet-stream blob. */
-async function looksLikeAudio(blob) {
-  try {
-    const buf = await blob.slice(0, 12).arrayBuffer();
-    const b = new Uint8Array(buf);
-    // ID3 (MP3 with tag)
-    if (b[0] === 0x49 && b[1] === 0x44 && b[2] === 0x33) return true;
-    // MP3 frame sync (0xFF 0xFB / 0xFA / 0xF3 / 0xF2 etc.)
-    if (b[0] === 0xFF && (b[1] & 0xE0) === 0xE0) return true;
-    // RIFF (WAV)
-    if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46) return true;
-    // OggS (Ogg/FLAC-in-Ogg/Opus)
-    if (b[0] === 0x4F && b[1] === 0x67 && b[2] === 0x67 && b[3] === 0x53) return true;
-    // fLaC (native FLAC)
-    if (b[0] === 0x66 && b[1] === 0x4C && b[2] === 0x61 && b[3] === 0x43) return true;
-    // ftyp (MP4/M4A) — appears at offset 4
-    if (b[4] === 0x66 && b[5] === 0x74 && b[6] === 0x79 && b[7] === 0x70) return true;
-    return false;
-  } catch (e) {
-    return false;
-  }
-}
-
-async function tryFetchUrlAsAudio(text, onFile) {
-  // Accept blob:, data:, http(s): URLs that look like audio
-  if (!/^(blob:|data:audio\/|https?:)/i.test(text)) return false;
-  try {
-    const res = await fetch(text);
-    if (!res.ok) return false;
-    const blob = await res.blob();
-    if (!blob.type.startsWith('audio/')) return false;
-    // Pull a filename from the URL if possible
-    let filename = 'pasted-audio';
-    try {
-      const u = new URL(text);
-      const last = u.pathname.split('/').pop();
-      if (last && /\.[a-z0-9]{2,5}$/i.test(last)) filename = decodeURIComponent(last);
-    } catch (e) {}
-    if (!/\.[a-z0-9]{2,5}$/i.test(filename)) filename = inferFilename(blob, filename);
-    const file = new File([blob], filename, { type: blob.type });
-    onFile(file, { fromPaste: true });
-    return true;
-  } catch (err) {
-    console.warn('URL fetch failed:', err);
-    return false;
-  }
-}
-
-function wirePasteButton(onFile) {
-  const btn = $('#pasteBtn');
-  if (!btn) return;
-  btn.addEventListener('click', () => tryClipboardRead(onFile));
-}
-
-/* Global paste listener — Cmd+V / Ctrl+V anywhere on the page.
-   Skips when focus is inside an input/textarea so it doesn't hijack typing. */
-function wireGlobalPaste(onFile) {
-  document.addEventListener('paste', (e) => {
-    // Don't interfere with text paste into textareas/inputs
-    const target = e.target;
-    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
-
-    const items = e.clipboardData && e.clipboardData.files;
-    if (items && items.length > 0) {
-      for (const f of items) {
-        if (isAudioFile(f)) {
-          e.preventDefault();
-          // If the clipboard file has no real name (just "image.png" or empty), infer one
-          const file = f.name ? f : new File([f], inferFilename(f), { type: f.type });
-          onFile(file, { fromPaste: true });
-          return;
-        }
-      }
-    }
-    // Try text fallback (a URL to an audio file)
-    const text = e.clipboardData && e.clipboardData.getData('text/plain');
-    if (text) tryFetchUrlAsAudio(text.trim(), onFile);
-  });
 }
 
 /* ---------- Reviewer: handle a chosen file ---------- */
@@ -1670,23 +1322,13 @@ function handleReviewerFile(file, _opts = {}) {
 }
 
 /* ---------- Creator: handle a chosen file (must match) ---------- */
-function handleCreatorFile(file, opts = {}) {
+function handleCreatorFile(file, _opts = {}) {
   const errEl = $('#fileErr');
   if (errEl) errEl.innerHTML = '';
 
-  const matches = file.name === state.expectedName;
-
-  if (!matches) {
-    if (opts.fromPaste) {
-      // Pasted file usually has an inferred name like "pasted-audio.mp3" — accept it
-      // but warn the listener so they can verify it's the right track.
-      if (errEl) errEl.innerHTML = `<div class="file-error" style="background: rgba(255,107,31,0.08); border-color: rgba(255,107,31,0.4); color: var(--accent-soft);">
-        Pasted audio loaded as <strong>${escapeHtml(file.name)}</strong>. The review was made for <strong>${escapeHtml(state.expectedName)}</strong> — check the waveform looks right.
-      </div>`;
-    } else {
-      if (errEl) errEl.innerHTML = `<div class="file-error">This is <strong>${escapeHtml(file.name)}</strong>, but the review is for <strong>${escapeHtml(state.expectedName)}</strong>. Please load the matching file.</div>`;
-      return;
-    }
+  if (file.name !== state.expectedName) {
+    if (errEl) errEl.innerHTML = `<div class="file-error">This is <strong>${escapeHtml(file.name)}</strong>, but the review is for <strong>${escapeHtml(state.expectedName)}</strong>. Please load the matching file.</div>`;
+    return;
   }
 
   state.file = file;
@@ -1803,17 +1445,8 @@ function renderControls() {
   $('#controls').classList.remove('hidden');
   const inner = $('#controlsInner');
 
-  // Shared markup: volume row on top, transport row below
-  const volRow = `
-    <div class="vol-row">
-      <button class="vol-btn" id="volBtn" aria-label="Mute">${ICONS.volHigh}</button>
-      <input type="range" class="vol-slider" id="volSlider" min="0" max="100" value="100" aria-label="Volume">
-      <span class="vol-pct-label" id="volLabel">100</span>
-    </div>
-  `;
-
   if (state.mode === 'reviewer') {
-    inner.innerHTML = volRow + `
+    inner.innerHTML = `
       <div class="controls-row">
         <button class="skip-btn" id="back5Btn" aria-label="Back 5 seconds">${ICONS.back5}</button>
         <button class="play-btn" id="playBtn" aria-label="Play/Pause">${ICONS.play}</button>
@@ -1828,7 +1461,7 @@ function renderControls() {
     $('#addBtn').onclick = openCommentSheet;
     $('#shareBtn').onclick = openShareSheet;
   } else {
-    inner.innerHTML = volRow + `
+    inner.innerHTML = `
       <div class="controls-row">
         <button class="skip-btn" id="back5Btn" aria-label="Back 5 seconds">${ICONS.back5}</button>
         <button class="play-btn" id="playBtn" aria-label="Play/Pause">${ICONS.play}</button>
@@ -1844,8 +1477,6 @@ function renderControls() {
     $('#back5Btn').onclick = () => skipBy(-5);
     $('#fwd5Btn').onclick = () => skipBy(5);
   }
-
-  wireVolumeControls();
 }
 
 /* ---------- Skip back / forward ---------- */
@@ -1854,65 +1485,6 @@ function skipBy(seconds) {
   const current = state.ws.getCurrentTime();
   const target = Math.max(0, Math.min(state.duration, current + seconds));
   state.ws.seekTo(target / state.duration);
-}
-
-/* ---------- Volume ---------- */
-function wireVolumeControls() {
-  const slider = $('#volSlider');
-  const label = $('#volLabel');
-  const btn = $('#volBtn');
-  if (!slider) return;
-
-  // Restore saved volume (last-used pref, in-memory only — no localStorage)
-  const initial = state.lastVolume != null ? state.lastVolume : 100;
-  slider.value = initial;
-  applyVolume(initial, false);
-
-  slider.addEventListener('input', (e) => {
-    const v = +e.target.value;
-    applyVolume(v, false);
-  });
-
-  btn.addEventListener('click', () => {
-    if (state.muted) {
-      // unmute → restore previous level
-      applyVolume(state.preMuteVolume || 100, false);
-      state.muted = false;
-      slider.value = state.preMuteVolume || 100;
-    } else {
-      state.preMuteVolume = +slider.value;
-      applyVolume(0, true);
-      slider.value = 0;
-      state.muted = true;
-    }
-  });
-}
-
-function applyVolume(pct, isMuteToggle) {
-  const slider = $('#volSlider');
-  const label = $('#volLabel');
-  const btn = $('#volBtn');
-  if (!slider) return;
-
-  const vol = pct / 100;
-  if (state.ws) {
-    try { state.ws.setVolume(vol); } catch (e) {}
-  }
-  state.lastVolume = pct;
-
-  // Update slider fill (WebKit needs this CSS var trick)
-  slider.style.setProperty('--vol-pct', pct + '%');
-  label.textContent = pct;
-
-  // Swap volume icon based on level
-  if (!isMuteToggle) state.muted = (pct === 0);
-  let icon;
-  if (pct === 0) icon = ICONS.volMute;
-  else if (pct < 33) icon = ICONS.volLow;
-  else if (pct < 66) icon = ICONS.volMid;
-  else icon = ICONS.volHigh;
-  btn.innerHTML = icon;
-  btn.classList.toggle('muted', pct === 0);
 }
 
 /* ---------- WaveSurfer setup ---------- */
@@ -1947,10 +1519,6 @@ function initWaveSurfer() {
     $('#trackSub').textContent = `${fmtTime(state.duration)} · ready`;
     if (state.mode === 'reviewer') {
       $('#addBtn').disabled = false;
-    }
-    // Sync volume from current UI state
-    if (state.lastVolume != null) {
-      try { ws.setVolume(state.lastVolume / 100); } catch (e) {}
     }
     renderPins();
     renderComments();
