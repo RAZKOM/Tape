@@ -45,11 +45,11 @@ Timestamped music reviews shared via URL. The audio stays on your device. Only y
 
 **Pin interactions:** Pins render as numbered knobs along the waveform with glowing stems. Tap a pin to seek there. The currently playing pin highlights in the notes list as the song reaches it.
 
-**Bottom-anchored controls:** Volume slider on top with an icon that swaps through mute, low, mid, and high. Transport row below with skip back 5s, play / pause, skip forward 5s, pin, and share. Every button is at least 48 by 56 pixels for thumb use.
+**Bottom-anchored controls:** Transport row with skip back 5s, play / pause, skip forward 5s, pin, and share. Every button is at least 48 by 56 pixels for thumb use.
 
 **URL as storage:** Notes are encoded with LZ-string compression and put in the hash fragment. Nothing is sent to a server. A typical 3 to 5 minute song with 20 to 40 notes lands well under 2 KB, which is safe to send through any chat app.
 
-**Filename guard:** Listener mode checks that the file the recipient picks matches the filename the reviewer used. A mismatch shows an inline error so people don't review version A and listen to version B by accident.
+**Filename & Duration guard:** Listener mode checks that the file the recipient picks matches the filename and the duration of the file that the reviewer used. A mismatch shows an inline error so people don't review version A and listen to version B by accident.
 
 **Offline ready:** Single HTML file with two CDN dependencies (WaveSurfer.js, LZ-string). Once cached, it works offline. Self-host it anywhere static, including a USB stick.
 
