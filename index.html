@@ -151,7 +151,7 @@
   /* ───── Main scroll area ───── */
   main {
     flex: 1;
-    padding: 20px 22px 140px;
+    padding: 20px 22px 250px;
     max-width: 980px;
     margin: 0 auto;
     width: 100%;
@@ -318,39 +318,6 @@
     margin: -2px -6px;
     transition: background 0.15s;
   }
-  .track-title-text.editable:active {
-    background: var(--bg-2);
-  }
-  .track-title-text.editable::after {
-    content: '';
-    display: inline-block;
-    width: 12px; height: 12px;
-    margin-left: 8px;
-    background-color: var(--ink-faint);
-    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'/%3E%3Cpath d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'/%3E%3C/svg%3E") no-repeat center / contain;
-    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'/%3E%3Cpath d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'/%3E%3C/svg%3E") no-repeat center / contain;
-    vertical-align: middle;
-    opacity: 0.5;
-    transition: opacity 0.15s;
-  }
-  .track-title-text.editable:active::after { opacity: 1; }
-
-  .track-title-input {
-    font-family: var(--serif);
-    font-weight: 400;
-    font-size: clamp(22px, 5vw, 30px);
-    letter-spacing: -0.02em;
-    line-height: 1.2;
-    color: var(--ink);
-    background: var(--bg-2);
-    border: 1px solid var(--accent);
-    border-radius: 8px;
-    padding: 4px 10px;
-    outline: none;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
   .track-sub {
     font-family: var(--mono);
     font-size: 11px;
@@ -369,7 +336,7 @@
       linear-gradient(180deg, var(--bg-1), var(--bg));
     padding: 24px 18px 16px;
     overflow: hidden;
-    touch-action: none; /* required so vertical drags don't trigger page scroll while scrubbing */
+    touch-action: none;
     user-select: none;
     -webkit-user-select: none;
   }
@@ -388,9 +355,9 @@
     z-index: 1;
     cursor: ew-resize;
   }
-  #waveform > div { overflow: visible !important; } /* let pins show above */
+  #waveform > div { overflow: visible !important; }
 
-  /* Scrub overlay — floating readout that follows the finger */
+  /* Scrub overlay */
   .scrubber {
     position: fixed;
     z-index: 300;
@@ -438,7 +405,7 @@
     backdrop-filter: blur(8px);
   }
 
-  /* Live cursor line that follows the scrub position on the wave itself */
+  /* Live cursor line */
   .scrub-cursor {
     position: absolute;
     top: 8px; bottom: 8px;
@@ -453,7 +420,6 @@
   }
   .scrub-cursor.active { opacity: 1; }
 
-  /* Subtle hint shown briefly when the player loads */
   .scrub-tip {
     position: absolute;
     left: 50%; bottom: 56px;
@@ -478,7 +444,7 @@
     100% { opacity: 0; transform: translate(-50%, -8px); }
   }
 
-  /* Pin layer (overlays waveform) */
+  /* Pin layer */
   .pins {
     position: absolute;
     left: 18px; right: 18px;
@@ -652,15 +618,26 @@
     border-radius: 18px;
     padding: 10px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
   .controls-row {
     display: flex;
     align-items: center;
     gap: 10px;
   }
+  .controls-row.transport {
+    justify-content: center;
+  }
+  .controls-divider {
+    height: 1px;
+    background: var(--line);
+    margin: 0 2px;
+  }
 
   .play-btn {
-    width: 56px; height: 56px;
+    width: 56px; height: 52px;
     border-radius: 14px;
     border: none;
     background: var(--accent);
@@ -674,9 +651,8 @@
   .play-btn:active { transform: scale(0.94); background: var(--accent-soft); }
   .play-btn svg { width: 22px; height: 22px; }
 
-  /* Skip back / forward buttons */
   .skip-btn {
-    width: 48px; height: 56px;
+    width: 52px; height: 52px;
     border-radius: 14px;
     border: 1px solid var(--line);
     background: var(--bg-2);
@@ -693,9 +669,59 @@
   }
   .skip-btn:disabled { opacity: 0.4; pointer-events: none; }
 
+  /* ── Quick-react strip ── */
+  .quick-react {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 2px;
+    margin: 0 -2px;
+  }
+  .quick-react::-webkit-scrollbar { display: none; }
+  .quick-react-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-faint);
+    flex-shrink: 0;
+    padding-right: 2px;
+  }
+  .qr-btn {
+    flex: 1 0 auto;
+    min-width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--bg-2);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.12s, background 0.15s, border-color 0.15s;
+    padding: 0;
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  }
+  .qr-btn:active {
+    transform: scale(0.86);
+    background: var(--bg-1);
+    border-color: var(--accent);
+  }
+  .qr-btn.flash {
+    background: var(--accent);
+    border-color: var(--accent);
+    transform: scale(1.12);
+  }
+  .qr-btn:disabled { opacity: 0.4; pointer-events: none; }
+
   .add-btn {
     flex: 1;
-    height: 56px;
+    height: 52px;
     border-radius: 14px;
     border: 1px solid var(--accent);
     background: rgba(255,107,31,0.08);
@@ -712,23 +738,30 @@
   .add-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .share-btn {
-    height: 56px;
-    padding: 0 22px;
+    height: 52px;
+    padding: 0 20px;
     border-radius: 14px;
     border: none;
-    background: var(--ink);
+    background: var(--accent);
     color: var(--bg);
     font-family: var(--sans);
     font-weight: 600;
     font-size: 15px;
     cursor: pointer;
-    transition: transform 0.15s;
-    display: flex; align-items: center; gap: 8px;
+    transition: transform 0.15s, background 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 18px var(--accent-glow);
   }
-  .share-btn:active { transform: scale(0.97); }
-  .share-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .share-btn:active { transform: scale(0.97); background: var(--accent-soft); }
+  .share-btn:disabled {
+    opacity: 1;
+    background: var(--bg-2);
+    color: var(--ink-faint);
+    box-shadow: none;
+    cursor: not-allowed;
+  }
 
-  /* Creator mode: simpler controls */
   .ghost-btn {
     height: 56px;
     padding: 0 22px;
@@ -747,7 +780,7 @@
   }
   .ghost-btn:active { background: var(--bg-1); transform: scale(0.97); }
 
-  /* ───── Bottom sheet (comment input + share + comment view) ───── */
+  /* ───── Bottom sheet ───── */
   .sheet-backdrop {
     position: fixed; inset: 0;
     background: rgba(0,0,0,0.65);
@@ -820,7 +853,7 @@
   }
   .sheet textarea:focus { border-color: var(--accent); }
 
-  /* Reaction picker — quick-pin emoji row */
+  /* Reaction picker */
   .reactions {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
@@ -840,7 +873,6 @@
     justify-content: center;
     transition: all 0.15s;
     padding: 0;
-    /* Use system emoji font so all platforms get their native rendering */
     font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
   }
   .reaction-btn:active {
@@ -848,7 +880,6 @@
     background: var(--bg-1);
     border-color: var(--accent);
   }
-  /* Brief flash when a reaction lands */
   .reaction-btn.flash {
     background: var(--accent);
     border-color: var(--accent);
@@ -881,7 +912,6 @@
     background: var(--line);
   }
 
-  /* Smaller emoji pin knob — when comment is reaction-only */
   .pin .knob.emoji-knob {
     background: var(--bg);
     font-size: 14px;
@@ -893,7 +923,6 @@
     transform: translateX(-50%) scale(1.18);
   }
 
-  /* Comment row: emoji-prefixed comments get a slightly different ts treatment */
   .comment .text .reaction-glyph {
     font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
     font-size: 26px;
@@ -926,7 +955,7 @@
     color: var(--bg);
   }
 
-  /* Share sheet specifics */
+  /* Share sheet */
   .share-link-box {
     display: flex;
     gap: 8px;
@@ -971,7 +1000,74 @@
     margin-top: 8px;
   }
 
-  /* Mismatched filename error */
+  /* Finalize sheet */
+  .finalize-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px; height: 52px;
+    margin: 4px auto 14px;
+    border-radius: 16px;
+    background: rgba(255,107,31,0.1);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+  }
+  .finalize-badge svg { width: 26px; height: 26px; }
+  .finalize-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 16px 0 4px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .finalize-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 13px 14px;
+    background: var(--bg);
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--ink-dim);
+  }
+  .finalize-step + .finalize-step { border-top: 1px solid var(--line); }
+  .finalize-step .step-num {
+    flex-shrink: 0;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--bg);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .finalize-step strong { color: var(--ink); font-weight: 600; }
+  .finalize-step.done .step-num {
+    background: #5ec578;
+  }
+  .native-share-btn {
+    width: 100%;
+    height: 54px;
+    margin-top: 16px;
+    border-radius: 14px;
+    border: none;
+    background: var(--accent);
+    color: var(--bg);
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 9px;
+    transition: transform 0.15s, background 0.2s;
+    box-shadow: 0 4px 18px var(--accent-glow);
+  }
+  .native-share-btn:active { transform: scale(0.98); background: var(--accent-soft); }
+  .native-share-btn svg { width: 19px; height: 19px; }
+
+  /* File error */
   .file-error {
     background: rgba(229,72,72,0.08);
     border: 1px solid rgba(229,72,72,0.3);
@@ -1024,22 +1120,20 @@
 
   .hidden { display: none !important; }
 
-  /* Mobile-specific tweaks */
   @media (max-width: 640px) {
     .header { padding: 14px 18px 6px; }
-    main { padding: 16px 18px 130px; }
+    main { padding: 16px 18px 252px; }
     .wave-wrap { padding: 22px 14px 14px; }
     .pins { left: 14px; right: 14px; top: 22px; bottom: 14px; }
-    .share-btn { padding: 0 16px; font-size: 14px; }
+    .share-btn { padding: 0 18px; font-size: 14px; }
     .controls-row { gap: 8px; }
-    .controls-inner { padding: 8px; }
-    .skip-btn { width: 44px; }
+    .controls-inner { padding: 8px; gap: 8px; }
+    .qr-btn { min-width: 44px; height: 44px; font-size: 21px; }
   }
 
-  /* Hide share-btn label on very small */
   @media (max-width: 380px) {
-    .share-btn-label { display: none; }
-    .share-btn { padding: 0 16px; }
+    .quick-react-label { display: none; }
+    .add-btn { font-size: 14px; }
   }
 </style>
 </head>
@@ -1052,67 +1146,63 @@
       <span class="logo-dot"></span>
       <span>Tape</span>
     </div>
-    <div class="mode-tag" id="modeTag">— —</div>
+    <div class="mode-tag" id="modeTag">- -</div>
   </header>
 
   <main id="main">
     <!-- Dynamic screens rendered here -->
   </main>
 
-  <!-- Bottom controls (player mode) -->
   <div class="controls hidden" id="controls">
     <div class="controls-inner" id="controlsInner">
-      <!-- Filled by JS depending on mode -->
     </div>
   </div>
 </div>
 
-<!-- Bottom sheet backdrop + sheet -->
 <div class="sheet-backdrop" id="sheetBackdrop"></div>
 <div class="sheet" id="sheet">
   <div class="sheet-handle"></div>
   <div id="sheetContent"></div>
 </div>
 
-<!-- Floating scrubber readout (follows finger during scrub) -->
 <div class="scrubber" id="scrubber">
   <div class="scrubber-hint" id="scrubberHint">Drag down for finer control</div>
   <div class="scrubber-precision" id="scrubberPrecision">1× speed</div>
   <div class="scrubber-time" id="scrubberTime">0:00</div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast">Copied</div>
 
-<!-- Hidden file input — visually hidden but kept in layout for iOS Safari to fire the click.
-     No accept filter, since iOS Files greys out MP3s when audio/* is set; we validate after pickup. -->
 <input type="file" id="fileInput" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">
 
 <script>
 /* ============================================================
    Tape — timestamped music reviews
-   Two modes: REVIEWER (no hash) and CREATOR (hash with data)
    ============================================================ */
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
 const state = {
-  mode: null,          // 'reviewer' | 'creator'
-  ws: null,            // WaveSurfer instance
-  file: null,          // File object
-  filename: null,      // string
+  mode: null,
+  ws: null,
+  file: null,
+  filename: null,
   duration: 0,
-  comments: [],        // [{t, c}]
-  expectedName: null,  // for creator mode
+  comments: [],
+  expectedName: null,
+  expectedDuration: null, // NEW — stored duration from payload (seconds, rounded)
   ready: false,
   isPlaying: false,
   activePinIdx: null,
 };
 
-/* Preset reactions — quick-pin emojis that skip the text input.
-   Each reaction's `c` field is just the emoji character, so it round-trips
-   cleanly through the same comment data structure as typed notes. */
+/* Duration tolerance: how many seconds of difference we allow between
+   the payload's stored duration and the loaded file's actual duration.
+   VBR MP3s and different decoders can introduce small discrepancies,
+   so we give 3 seconds of wiggle room before crying foul. */
+const DURATION_TOLERANCE = 3;
+
 const REACTIONS = [
   { emoji: '🔥', label: 'Fire' },
   { emoji: '👍', label: 'Good' },
@@ -1124,8 +1214,6 @@ const REACTIONS = [
   { emoji: '💡', label: 'Idea' },
 ];
 
-/* Detect if a comment is "reaction-only" — a single emoji we recognize.
-   Used to decide whether to show the emoji on the pin knob instead of a number. */
 function reactionFor(text) {
   const trimmed = text.trim();
   return REACTIONS.find(r => r.emoji === trimmed) || null;
@@ -1146,13 +1234,15 @@ function toast(msg, ms = 1800) {
   t._tm = setTimeout(() => t.classList.remove('show'), ms);
 }
 
-/* Icons (inline SVG factory) */
 const ICONS = {
   upload: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`,
   play: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`,
   pause: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>`,
   plus: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
   share: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>`,
+  comment: `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>`,
+  send: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`,
+  check2: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
   music: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`,
   trash: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>`,
   copy: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`,
@@ -1162,11 +1252,26 @@ const ICONS = {
 };
 
 /* ---------- URL encode/decode ---------- */
-function encodePayload(filename, comments) {
-  const data = { f: filename, c: comments.map(c => ({ t: +c.t.toFixed(2), c: c.c })) };
+
+/*
+ * Payload format (v2): { f, d, c }
+ *   f — filename string
+ *   d — track duration in seconds, rounded to nearest integer
+ *   c — array of { t, c } comment objects
+ *
+ * Old payloads (v1) without `d` still decode fine; we just skip the
+ * duration check when `d` is absent (graceful degradation).
+ */
+function encodePayload(filename, duration, comments) {
+  const data = {
+    f: filename,
+    d: Math.round(duration),
+    c: comments.map(c => ({ t: +c.t.toFixed(2), c: c.c }))
+  };
   const json = JSON.stringify(data);
   return LZString.compressToEncodedURIComponent(json);
 }
+
 function decodePayload(hash) {
   try {
     const raw = hash.startsWith('#') ? hash.slice(1) : hash;
@@ -1175,11 +1280,35 @@ function decodePayload(hash) {
     if (!json) return null;
     const data = JSON.parse(json);
     if (!data.f || !Array.isArray(data.c)) return null;
-    return { filename: data.f, comments: data.c.map(c => ({ t: +c.t, c: String(c.c) })) };
+    return {
+      filename: data.f,
+      duration: (data.d != null) ? +data.d : null, // null = old v1 payload
+      comments: data.c.map(c => ({ t: +c.t, c: String(c.c) }))
+    };
   } catch (e) {
     console.warn('Failed to decode hash:', e);
     return null;
   }
+}
+
+/* ---------- Get file duration without fully decoding ----------
+   Uses an <audio> element so only the file header is read — fast
+   and memory-efficient even for long tracks. */
+function getFileDuration(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const audio = document.createElement('audio');
+    audio.preload = 'metadata';
+    audio.onloadedmetadata = () => {
+      URL.revokeObjectURL(url);
+      resolve(audio.duration);
+    };
+    audio.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Could not read audio metadata'));
+    };
+    audio.src = url;
+  });
 }
 
 /* ============================================================
@@ -1190,13 +1319,14 @@ function boot() {
   if (decoded) {
     state.mode = 'creator';
     state.expectedName = decoded.filename;
+    state.expectedDuration = decoded.duration; // may be null for old links
     state.comments = decoded.comments;
     renderCreatorIntro();
   } else {
     state.mode = 'reviewer';
     renderReviewerIntro();
   }
-  $('#modeTag').textContent = state.mode === 'reviewer' ? 'Reviewer' : 'Listener';
+  $('#modeTag').textContent = state.mode === 'reviewer' ? 'Reviewer' : 'Artist';
   $('#modeTag').classList.toggle('live', state.mode === 'creator');
 }
 
@@ -1208,7 +1338,7 @@ function renderReviewerIntro() {
   main.innerHTML = `
     <section class="intro">
       <h1>Mark the <em>moments</em><br>that move you.</h1>
-      <p>Drop a track, pin your reactions to the waveform, then share the link. The audio never leaves your device — only your timestamped notes travel.</p>
+      <p>Drop a track, pin comments and reactions right on the waveform, then send the link back to whoever shared it with you. The audio never leaves your device — only your timestamped comments travel.</p>
       <div class="drop" id="drop">
         <div class="drop-inner">
           <div class="drop-icon">${ICONS.upload}</div>
@@ -1227,10 +1357,13 @@ function renderReviewerIntro() {
 function renderCreatorIntro() {
   const main = $('#main');
   const n = state.comments.length;
+  const durationHint = state.expectedDuration != null
+    ? `<div class="stat"><div class="num">${fmtTime(state.expectedDuration)}</div><div class="lbl">Length</div></div>`
+    : '';
   main.innerHTML = `
     <section class="load-card">
       <div class="meta">A review awaits</div>
-      <h2>Someone left <em>${n} note${n===1?'':'s'}</em> on a track for you.</h2>
+      <h2>Someone left <em>${n} comment${n===1?'':'s'}</em> on a track for you.</h2>
       <div class="filename-pill">
         ${ICONS.music}
         <span>${escapeHtml(state.expectedName)}</span>
@@ -1241,6 +1374,7 @@ function renderCreatorIntro() {
           <div class="num">${n}</div>
           <div class="lbl">Comments</div>
         </div>
+        ${durationHint}
       </div>
       <div class="drop" id="drop" style="padding: 28px 20px;">
         <div class="drop-inner">
@@ -1281,7 +1415,7 @@ function wireDropZone(onFile) {
   input.onchange = e => {
     const f = e.target.files[0];
     if (f) onFile(f);
-    input.value = ''; // allow re-picking same file
+    input.value = '';
   };
 }
 
@@ -1289,14 +1423,11 @@ function wireDropZone(onFile) {
 function isAudioFile(file) {
   if (!file) return false;
   if (file.type && file.type.startsWith('audio/')) return true;
-  // M4A files are sometimes labeled as video/mp4 by iOS
   if (file.type === 'video/mp4' && /\.m4a$/i.test(file.name || '')) return true;
-  // Fall back to extension — iOS often hands us files with empty .type
   return /\.(mp3|wav|wave|ogg|oga|flac|m4a|m4b|aac|wma|opus|aif|aiff|weba|webm|mp4)$/i.test(file.name || '');
 }
 
 function inferFilename(file, fallback = 'track') {
-  // Used only when a picked file somehow has no name; guesses an extension from MIME type
   const mime = (file.type || '').toLowerCase();
   const extMap = {
     'audio/mpeg': 'mp3', 'audio/mp3': 'mp3',
@@ -1310,7 +1441,7 @@ function inferFilename(file, fallback = 'track') {
 }
 
 /* ---------- Reviewer: handle a chosen file ---------- */
-function handleReviewerFile(file, _opts = {}) {
+function handleReviewerFile(file) {
   if (!isAudioFile(file)) {
     toast(`Doesn't look like audio: ${file.name || 'unnamed file'}`, 3500);
     return;
@@ -1321,14 +1452,49 @@ function handleReviewerFile(file, _opts = {}) {
   renderPlayer();
 }
 
-/* ---------- Creator: handle a chosen file (must match) ---------- */
-function handleCreatorFile(file, _opts = {}) {
+/* ---------- Creator: handle a chosen file (must match name + duration) ---------- */
+async function handleCreatorFile(file) {
   const errEl = $('#fileErr');
   if (errEl) errEl.innerHTML = '';
 
+  // 1. Name check — fast, synchronous
   if (file.name !== state.expectedName) {
     if (errEl) errEl.innerHTML = `<div class="file-error">This is <strong>${escapeHtml(file.name)}</strong>, but the review is for <strong>${escapeHtml(state.expectedName)}</strong>. Please load the matching file.</div>`;
     return;
+  }
+
+  // 2. Duration check — only when the payload contains a duration (v2+)
+  if (state.expectedDuration != null) {
+    // Show a quick loading state on the drop zone while we read the metadata
+    const dropTitle = $('#drop .drop-title');
+    if (dropTitle) dropTitle.textContent = 'Checking file…';
+
+    let fileDuration;
+    try {
+      fileDuration = await getFileDuration(file);
+    } catch (e) {
+      // If we can't read the duration (unusual), fall through and let
+      // WaveSurfer deal with it — don't block the user on a metadata error.
+      console.warn('Could not read file duration for validation:', e);
+      fileDuration = null;
+    }
+
+    if (fileDuration != null) {
+      const delta = Math.abs(fileDuration - state.expectedDuration);
+      if (delta > DURATION_TOLERANCE) {
+        const loadedFmt = fmtTime(fileDuration);
+        const expectedFmt = fmtTime(state.expectedDuration);
+        if (errEl) errEl.innerHTML = `
+          <div class="file-error">
+            This file is <strong>${loadedFmt}</strong> long, but the review was made on a
+            <strong>${expectedFmt}</strong> version of <strong>${escapeHtml(state.expectedName)}</strong>.
+            The comments won't line up — please load the same version that was reviewed.
+          </div>`;
+        // Restore drop zone text
+        if (dropTitle) dropTitle.innerHTML = `Load <em style="font-style:italic;color:var(--accent)">${escapeHtml(state.expectedName)}</em>`;
+        return;
+      }
+    }
   }
 
   state.file = file;
@@ -1341,13 +1507,12 @@ function handleCreatorFile(file, _opts = {}) {
    ============================================================ */
 function renderPlayer() {
   const main = $('#main');
-  const canRename = state.mode === 'reviewer';
   main.innerHTML = `
     <section class="player">
       <div class="track-head">
         <div style="flex: 1; min-width: 0;">
           <h2 class="track-title">
-            <span class="track-title-text${canRename ? ' editable' : ''}" id="trackTitleText" ${canRename ? 'role="button" tabindex="0" aria-label="Rename track"' : ''}>${escapeHtml(state.filename)}</span>
+            <span class="track-title-text" id="trackTitleText">${escapeHtml(state.filename)}</span>
           </h2>
           <div class="track-sub" id="trackSub">Loading waveform…</div>
         </div>
@@ -1366,7 +1531,7 @@ function renderPlayer() {
 
       <div class="comments-section">
         <div class="section-head">
-          <h3>Notes</h3>
+          <h3>Comments</h3>
           <span class="count" id="commentCount">0</span>
         </div>
         <div class="comments" id="commentsList"></div>
@@ -1374,101 +1539,65 @@ function renderPlayer() {
     </section>
   `;
 
-  // Render bottom controls
   renderControls();
-
-  // Wire up rename if reviewer
-  if (canRename) wireTitleRename();
-
-  // Boot WaveSurfer
   initWaveSurfer();
 }
 
-/* ---------- Inline filename rename (reviewer only) ---------- */
-function wireTitleRename() {
-  const el = $('#trackTitleText');
-  if (!el) return;
-
-  const startEdit = () => {
-    const currentName = state.filename;
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'track-title-input';
-    input.value = currentName;
-    input.spellcheck = false;
-    input.autocomplete = 'off';
-    el.replaceWith(input);
-
-    // Select the basename (everything before the extension) for fast editing
-    const dot = currentName.lastIndexOf('.');
-    setTimeout(() => {
-      input.focus();
-      if (dot > 0) input.setSelectionRange(0, dot);
-      else input.select();
-    }, 10);
-
-    const commit = (save) => {
-      let newName = save ? input.value.trim() : currentName;
-      if (!newName) newName = currentName; // refuse empty
-      // Preserve extension if user dropped it
-      const oldExt = currentName.match(/\.[a-z0-9]{2,5}$/i);
-      const hasExt = /\.[a-z0-9]{2,5}$/i.test(newName);
-      if (oldExt && !hasExt) newName += oldExt[0];
-
-      state.filename = newName;
-      // Re-render the title span
-      const span = document.createElement('span');
-      span.className = 'track-title-text editable';
-      span.id = 'trackTitleText';
-      span.setAttribute('role', 'button');
-      span.setAttribute('tabindex', '0');
-      span.setAttribute('aria-label', 'Rename track');
-      span.textContent = newName;
-      input.replaceWith(span);
-      wireTitleRename(); // re-attach handler to the new span
-    };
-
-    input.addEventListener('blur', () => commit(true));
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); commit(true); }
-      else if (e.key === 'Escape') { e.preventDefault(); commit(false); }
-    });
-  };
-
-  el.addEventListener('click', startEdit);
-  el.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startEdit(); }
-  });
-}
 
 function renderControls() {
   $('#controls').classList.remove('hidden');
   const inner = $('#controlsInner');
 
+  const transportRow = `
+    <div class="controls-row transport">
+      <button class="skip-btn" id="back5Btn" aria-label="Back 5 seconds">${ICONS.back5}</button>
+      <button class="play-btn" id="playBtn" aria-label="Play/Pause">${ICONS.play}</button>
+      <button class="skip-btn" id="fwd5Btn" aria-label="Forward 5 seconds">${ICONS.fwd5}</button>
+    </div>
+  `;
+
   if (state.mode === 'reviewer') {
+    const qrButtons = REACTIONS.map(r => `
+      <button class="qr-btn" data-emoji="${r.emoji}" aria-label="React: ${r.label}" title="${r.label}" disabled>${r.emoji}</button>
+    `).join('');
+
     inner.innerHTML = `
+      ${transportRow}
+      <div class="controls-divider"></div>
+      <div class="quick-react" id="quickReact">
+        <span class="quick-react-label">React</span>
+        ${qrButtons}
+      </div>
       <div class="controls-row">
-        <button class="skip-btn" id="back5Btn" aria-label="Back 5 seconds">${ICONS.back5}</button>
-        <button class="play-btn" id="playBtn" aria-label="Play/Pause">${ICONS.play}</button>
-        <button class="skip-btn" id="fwd5Btn" aria-label="Forward 5 seconds">${ICONS.fwd5}</button>
-        <button class="add-btn" id="addBtn" disabled>${ICONS.plus}<span>Pin</span></button>
-        <button class="share-btn" id="shareBtn" disabled>${ICONS.share}<span class="share-btn-label">Share</span></button>
+        <button class="add-btn" id="addBtn" disabled>${ICONS.comment}<span>Comment</span></button>
+        <button class="share-btn" id="shareBtn" disabled>${ICONS.send}<span>Finalize</span></button>
       </div>
     `;
     $('#playBtn').onclick = togglePlay;
     $('#back5Btn').onclick = () => skipBy(-5);
     $('#fwd5Btn').onclick = () => skipBy(5);
     $('#addBtn').onclick = openCommentSheet;
-    $('#shareBtn').onclick = openShareSheet;
+    $('#shareBtn').onclick = openFinalizeSheet;
+
+    $$('#quickReact .qr-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!state.ready) return;
+        const t = state.ws.getCurrentTime();
+        const emoji = btn.dataset.emoji;
+        btn.classList.add('flash');
+        setTimeout(() => btn.classList.remove('flash'), 200);
+        addCommentAt(t, emoji);
+        toast(`${emoji} pinned at ${fmtTime(t)}`);
+      });
+    });
   } else {
     inner.innerHTML = `
+      ${transportRow}
+      <div class="controls-divider"></div>
       <div class="controls-row">
-        <button class="skip-btn" id="back5Btn" aria-label="Back 5 seconds">${ICONS.back5}</button>
-        <button class="play-btn" id="playBtn" aria-label="Play/Pause">${ICONS.play}</button>
-        <button class="skip-btn" id="fwd5Btn" aria-label="Forward 5 seconds">${ICONS.fwd5}</button>
         <button class="add-btn" id="addBtn" disabled style="cursor:default; pointer-events:none; opacity:0.7;">
           <span style="font-family: var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:0.16em;">
-            Tap a pin to read
+            Tap a pin to read the feedback
           </span>
         </button>
       </div>
@@ -1505,7 +1634,7 @@ function initWaveSurfer() {
     barRadius: 2,
     height: 96,
     normalize: true,
-    interact: false, // we handle scrubbing ourselves for precision control
+    interact: false,
   });
   state.ws = ws;
 
@@ -1519,6 +1648,7 @@ function initWaveSurfer() {
     $('#trackSub').textContent = `${fmtTime(state.duration)} · ready`;
     if (state.mode === 'reviewer') {
       $('#addBtn').disabled = false;
+      $$('#quickReact .qr-btn').forEach(b => b.disabled = false);
     }
     renderPins();
     renderComments();
@@ -1564,7 +1694,6 @@ function renderPins() {
       pin.className = 'pin';
       pin.style.left = pct + '%';
       pin.dataset.idx = c._idx;
-      // Reaction-only comments get the emoji on the knob; otherwise the index number.
       const knobContent = reaction ? reaction.emoji : (displayIdx + 1);
       const knobClass = reaction ? 'knob emoji-knob' : 'knob';
       pin.innerHTML = `
@@ -1573,8 +1702,7 @@ function renderPins() {
       `;
       pin.addEventListener('click', (e) => {
         e.stopPropagation();
-        const idx = +pin.dataset.idx;
-        seekToComment(idx);
+        seekToComment(+pin.dataset.idx);
       });
       layer.appendChild(pin);
     });
@@ -1588,14 +1716,14 @@ function renderComments() {
 
   const sorted = state.comments
     .map((c, i) => ({ ...c, _idx: i }))
-    .sort((a, b) => a.t - b.t);
+    .sort((a, b) => b._idx - a._idx);
 
   countEl.textContent = sorted.length;
 
   if (sorted.length === 0) {
     list.innerHTML = state.mode === 'reviewer'
-      ? `<div class="empty">Play the track and tap "Pin" to react or drop a note at any moment</div>`
-      : `<div class="empty">No notes on this track</div>`;
+      ? `<div class="empty">Play the track, then tap a reaction or "Comment" to mark a moment. Your newest notes show up here</div>`
+      : `<div class="empty">No comments on this track</div>`;
   } else {
     list.innerHTML = sorted.map(c => {
       const reaction = reactionFor(c.c);
@@ -1614,7 +1742,6 @@ function renderComments() {
     }).join('');
   }
 
-  // Wire up tap-to-seek
   list.querySelectorAll('.comment').forEach(el => {
     el.addEventListener('click', (e) => {
       if (e.target.closest('.del')) return;
@@ -1628,7 +1755,6 @@ function renderComments() {
     });
   });
 
-  // Enable share button if reviewer has at least one comment
   if (state.mode === 'reviewer') {
     const sb = $('#shareBtn');
     if (sb) sb.disabled = state.comments.length === 0;
@@ -1636,7 +1762,6 @@ function renderComments() {
 }
 
 function highlightActiveComment(t) {
-  // Active = the latest comment whose timestamp is ≤ current time, within 4s window
   let active = -1;
   for (let i = 0; i < state.comments.length; i++) {
     const c = state.comments[i];
@@ -1659,7 +1784,6 @@ function seekToComment(idx) {
   const c = state.comments[idx];
   if (!c || !state.duration) return;
   state.ws.seekTo(c.t / state.duration);
-  // For creator mode, show the comment in a sheet
   if (state.mode === 'creator') {
     openCommentViewSheet(c);
   }
@@ -1667,13 +1791,6 @@ function seekToComment(idx) {
 
 /* ============================================================
    PRECISION SCRUBBING
-   Tap and drag horizontally on the waveform to seek.
-   Move your finger vertically away from the wave for finer control:
-     • On the wave (≤16px away):       1× speed
-     • Slight offset (16–60px):        1/2 speed
-     • Medium offset (60–140px):       1/4 speed
-     • Far offset (140–280px):         1/8 speed
-     • Very far (>280px):              1/16 speed (microscopic)
    ============================================================ */
 function wireScrubGesture() {
   const wrap = $('#waveWrap');
@@ -1687,18 +1804,18 @@ function wireScrubGesture() {
   let active = false;
   let startX = 0, startY = 0;
   let lastX = 0, lastY = 0;
-  let startTime = 0;    // playback time at gesture start (seconds)
-  let currentTime = 0;  // current scrub target (seconds)
+  let startTime = 0;
+  let currentTime = 0;
   let wasPlaying = false;
   let pointerId = null;
   let dragStarted = false;
-  let pinHit = null;    // pin element if the gesture started on a pin
+  let pinHit = null;
 
   const PRECISION_BANDS = [
-    { distance: 16,  factor: 1,    label: '1× speed' },
-    { distance: 60,  factor: 0.5,  label: '½× fine' },
-    { distance: 140, factor: 0.25, label: '¼× finer' },
-    { distance: 280, factor: 0.125, label: '⅛× precise' },
+    { distance: 16,  factor: 1,      label: '1× speed' },
+    { distance: 60,  factor: 0.5,    label: '½× fine' },
+    { distance: 140, factor: 0.25,   label: '¼× finer' },
+    { distance: 280, factor: 0.125,  label: '⅛× precise' },
     { distance: Infinity, factor: 0.0625, label: '1/16× micro' },
   ];
 
@@ -1710,7 +1827,6 @@ function wireScrubGesture() {
   }
 
   function getWaveRect() {
-    // The actual scrubbable strip is the area inside the wave-wrap padding
     const wrapRect = wrap.getBoundingClientRect();
     return {
       left: wrapRect.left + 18,
@@ -1727,30 +1843,16 @@ function wireScrubGesture() {
     return pct * state.duration;
   }
 
-  function updateCursor(t) {
-    const r = getWaveRect();
-    const wrapRect = wrap.getBoundingClientRect();
-    // Position cursor relative to wave-wrap (not viewport)
-    const pct = state.duration > 0 ? (t / state.duration) : 0;
-    const xInWrap = 18 + pct * r.width; // 18px = left padding
-    cursor.style.left = xInWrap + 'px';
-  }
-
   function updateScrubberPosition(clientX, clientY) {
-    // Float above the finger by ~110px so the user can see the readout
     scrubber.style.left = clientX + 'px';
     scrubber.style.top = (clientY - 110) + 'px';
   }
 
   function onPointerDown(e) {
     if (!state.ready || !state.duration) return;
-    // Only respond to primary pointer
     if (e.pointerType === 'mouse' && e.button !== 0) return;
 
-    // If the gesture starts on a pin's knob, let the pin's click handler win
-    // (we'll only start scrubbing if the user actually drags past the threshold)
     pinHit = e.target.closest('.pin');
-
     active = true;
     dragStarted = false;
     pointerId = e.pointerId;
@@ -1770,18 +1872,14 @@ function wireScrubGesture() {
     const totalDx = e.clientX - startX;
     const totalDy = Math.abs(e.clientY - startY);
 
-    // Only start scrubbing after a small drag threshold — protects pin taps
     if (!dragStarted) {
       const movedEnough = Math.abs(totalDx) > 6 || totalDy > 6;
       if (!movedEnough) {
         lastX = e.clientX; lastY = e.clientY;
         return;
       }
-      // We're committing to a scrub. If gesture started on a pin, let it go —
-      // user clearly wants to scrub, not tap the pin.
       pinHit = null;
       dragStarted = true;
-      // Pause playback during scrub for accuracy
       if (wasPlaying) state.ws.pause();
       cursor.classList.add('active');
       scrubber.classList.add('active');
@@ -1789,7 +1887,6 @@ function wireScrubGesture() {
 
     e.preventDefault();
 
-    // Figure out vertical distance from the wave strip
     const r = getWaveRect();
     const verticalDist = e.clientY < r.top
       ? r.top - e.clientY
@@ -1798,17 +1895,12 @@ function wireScrubGesture() {
         : 0;
 
     const band = getPrecision(verticalDist);
-
-    // Apply the precision factor to the horizontal delta
-    // (delta-based scrubbing, so precision feels right regardless of start position)
     const pxPerSecond = r.width / state.duration;
     const deltaSeconds = (dx * band.factor) / pxPerSecond;
     currentTime = Math.max(0, Math.min(state.duration, currentTime + deltaSeconds));
 
-    // Update WaveSurfer position
     state.ws.seekTo(currentTime / state.duration);
 
-    // Update overlay UI
     scrubberTime.textContent = fmtTime(currentTime);
     scrubberPrecision.textContent = band.label;
     scrubberPrecision.style.background = band.factor === 1 ? 'var(--bg)' : 'var(--accent)';
@@ -1816,7 +1908,11 @@ function wireScrubGesture() {
     scrubberHint.style.opacity = band.factor === 1 ? '1' : '0';
 
     updateScrubberPosition(e.clientX, e.clientY);
-    updateCursor(currentTime);
+
+    // Update scrub cursor position on the wave
+    const wrapRect = wrap.getBoundingClientRect();
+    const xInWrap = 18 + (currentTime / state.duration) * r.width;
+    cursor.style.left = xInWrap + 'px';
 
     lastX = e.clientX;
     lastY = e.clientY;
@@ -1829,18 +1925,14 @@ function wireScrubGesture() {
     try { wrap.releasePointerCapture(e.pointerId); } catch (err) {}
 
     if (dragStarted) {
-      // Real scrub gesture — resume playback if it was playing
       cursor.classList.remove('active');
       scrubber.classList.remove('active');
       if (wasPlaying) state.ws.play();
       e.preventDefault();
     } else if (pinHit) {
-      // Plain tap that started on a pin — fire the seek directly,
-      // since pointer capture prevents the pin's own click from firing reliably
       const idx = +pinHit.dataset.idx;
       if (!isNaN(idx)) seekToComment(idx);
     } else {
-      // Plain tap on the waveform — treat as a click-to-seek
       const r = getWaveRect();
       const inside = e.clientX >= r.left && e.clientX <= r.right
                   && e.clientY >= r.top && e.clientY <= r.bottom;
@@ -1854,15 +1946,10 @@ function wireScrubGesture() {
     pointerId = null;
   }
 
-  // Attach
   wrap.addEventListener('pointerdown', onPointerDown);
   wrap.addEventListener('pointermove', onPointerMove);
   wrap.addEventListener('pointerup', onPointerUp);
   wrap.addEventListener('pointercancel', onPointerUp);
-
-  // Keep cursor positioned while playing too (so user always sees where they are)
-  // Not strictly needed — the wavesurfer progress bar already shows this — but
-  // let's keep things tidy: hide our scrub cursor during normal playback.
 }
 
 /* ---------- Add / delete comments ---------- */
@@ -1878,7 +1965,7 @@ function deleteComment(idx) {
 }
 
 /* ============================================================
-   BOTTOM SHEET — three flavors
+   BOTTOM SHEET
    ============================================================ */
 function openSheet(html) {
   $('#sheetContent').innerHTML = html;
@@ -1891,60 +1978,31 @@ function closeSheet() {
 }
 $('#sheetBackdrop').addEventListener('click', closeSheet);
 
-/* — Add comment sheet (reviewer) —
-   Captures the timestamp at the moment of opening, but lets the music
-   keep playing while the reviewer types. The pin lands on the captured
-   timestamp, not on wherever the song happens to be when they hit save. */
+/* — Add comment sheet (reviewer) — */
 function openCommentSheet() {
   if (!state.ready) return;
   const capturedT = state.ws.getCurrentTime();
 
-  const reactionsHtml = REACTIONS.map(r => `
-    <button class="reaction-btn" data-emoji="${r.emoji}" aria-label="${r.label}" title="${r.label}">${r.emoji}</button>
-  `).join('');
-
   openSheet(`
     <div class="sheet-ts">At ${fmtTime(capturedT)}</div>
-    <h3 class="sheet-title">Drop a note</h3>
-
-    <div class="reactions-label">Quick react</div>
-    <div class="reactions" id="reactionsRow">${reactionsHtml}</div>
-
-    <div class="or-divider">or write</div>
-
-    <textarea id="commentInput" placeholder="What did you hear?" autocomplete="off"></textarea>
+    <h3 class="sheet-title">Write a comment</h3>
+    <textarea id="commentInput" placeholder="What did you hear at this moment?" autocomplete="off"></textarea>
     <div class="sheet-actions">
       <button class="btn-cancel" id="cmtCancel">Cancel</button>
-      <button class="btn-confirm" id="cmtSave">Pin it</button>
+      <button class="btn-confirm" id="cmtSave">Add comment</button>
     </div>
   `);
 
   const input = $('#commentInput');
-  // delay focus so the sheet animation finishes
   setTimeout(() => input.focus(), 250);
-
-  // Wire up quick-react buttons: tap to instantly pin + close
-  $$('#reactionsRow .reaction-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const emoji = btn.dataset.emoji;
-      // Brief visual flash before closing
-      btn.classList.add('flash');
-      addCommentAt(capturedT, emoji);
-      setTimeout(() => closeSheet(), 140);
-    });
-  });
 
   $('#cmtCancel').onclick = closeSheet;
   $('#cmtSave').onclick = () => {
     const text = input.value.trim();
-    if (!text) {
-      input.focus();
-      return;
-    }
+    if (!text) { input.focus(); return; }
     addCommentAt(capturedT, text);
     closeSheet();
   };
-  // Enter to save (Cmd/Ctrl+Enter on textarea also works)
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
@@ -1973,57 +2031,93 @@ function openCommentViewSheet(c) {
   $('#closeView').onclick = closeSheet;
 }
 
-/* — Share sheet (reviewer) — */
-function openShareSheet() {
+/* — Finalize sheet (reviewer) — */
+function openFinalizeSheet() {
   if (state.comments.length === 0) {
-    toast('Add a note first');
+    toast('Add a comment first');
     return;
   }
-  const payload = encodePayload(state.filename, state.comments);
-  const url = `${location.origin}${location.pathname}#${payload}`;
 
-  // Warn if URL is getting huge
+  // Pass the actual loaded duration so it gets baked into the payload
+  const payload = encodePayload(state.filename, state.duration, state.comments);
+  const url = `${location.origin}${location.pathname}#${payload}`;
+  const n = state.comments.length;
+
   const sizeWarn = url.length > 6000
     ? `<div class="share-hint" style="color:#ff8a8a; text-transform:none; letter-spacing:0.02em; margin-top:14px;">Heads up: this link is ${url.length.toLocaleString()} characters. Some chat apps may truncate very long URLs.</div>`
     : '';
 
+  const canNativeShare = typeof navigator.share === 'function';
+  const nativeShareBtn = canNativeShare
+    ? `<button class="native-share-btn" id="nativeShareBtn">${ICONS.send}<span>Send feedback link</span></button>`
+    : '';
+
   openSheet(`
-    <div class="sheet-ts">${state.comments.length} note${state.comments.length===1?'':'s'} · ${escapeHtml(state.filename)}</div>
-    <h3 class="sheet-title">Share your review</h3>
-    <div style="color:var(--ink-dim); font-size:14px; line-height:1.55; margin-bottom:6px;">
-      The recipient will need to open the same audio file on their device. Only your notes travel in the link.
+    <div class="finalize-badge">${ICONS.check2}</div>
+    <div class="sheet-ts" style="text-align:center;">Review finalized</div>
+    <h3 class="sheet-title" style="text-align:center;">${n} comment${n===1?'':'s'} on ${escapeHtml(state.filename)}</h3>
+
+    <div class="finalize-steps">
+      <div class="finalize-step done">
+        <span class="step-num">✓</span>
+        <span>Your <strong>${n} timestamped comment${n===1?'':'s'}</strong> ${n===1?'is':'are'} saved into the link below.</span>
+      </div>
+      <div class="finalize-step">
+        <span class="step-num">1</span>
+        <span>Send this link <strong>back to the person who shared the track with you</strong>.</span>
+      </div>
+      <div class="finalize-step">
+        <span class="step-num">2</span>
+        <span>They open it and load the <strong>same audio file</strong>. Your comments appear pinned to the waveform.</span>
+      </div>
     </div>
+
     <div class="share-link-box">
       <input type="text" id="shareLink" readonly value="${escapeHtml(url)}">
       <button class="copy-btn" id="copyBtn">${ICONS.copy}<span>Copy</span></button>
     </div>
+    ${nativeShareBtn}
     ${sizeWarn}
+    <div class="share-hint" style="text-transform:none; letter-spacing:0.02em; margin-top:14px;">
+      The audio itself never leaves your device, only your comments travel in the link.
+    </div>
     <div class="sheet-actions">
       <button class="btn-cancel" id="shareClose">Done</button>
     </div>
   `);
 
   const linkEl = $('#shareLink');
-  // Auto-select on focus for easy manual copy
   linkEl.addEventListener('focus', () => linkEl.select());
 
   $('#copyBtn').onclick = async () => {
     try {
       await navigator.clipboard.writeText(url);
     } catch (e) {
-      // Fallback for older / insecure contexts
       linkEl.select();
       document.execCommand('copy');
     }
     const btn = $('#copyBtn');
     btn.classList.add('copied');
     btn.innerHTML = `${ICONS.check}<span>Copied</span>`;
-    toast('Link copied');
+    toast('Link copied, now send it back');
     setTimeout(() => {
       btn.classList.remove('copied');
       btn.innerHTML = `${ICONS.copy}<span>Copy</span>`;
     }, 2200);
   };
+
+  if (canNativeShare) {
+    $('#nativeShareBtn').onclick = async () => {
+      try {
+        await navigator.share({
+          title: 'Tape - feedback on ' + state.filename,
+          text: `I left ${n} timestamped comment${n===1?'':'s'} on "${state.filename}". Open this link, then load the same audio file to see them.`,
+          url: url,
+        });
+      } catch (e) {}
+    };
+  }
+
   $('#shareClose').onclick = closeSheet;
 }
 
@@ -2032,7 +2126,6 @@ function openShareSheet() {
    ============================================================ */
 window.addEventListener('DOMContentLoaded', boot);
 
-// Re-decode if hash changes (e.g. user pastes a new link into address bar)
 window.addEventListener('hashchange', () => {
   if (state.ws) { try { state.ws.destroy(); } catch (e) {} state.ws = null; }
   state.file = null;
@@ -2042,11 +2135,8 @@ window.addEventListener('hashchange', () => {
   boot();
 });
 
-// Prevent accidental pull-to-refresh on the waveform area on mobile
 document.body.addEventListener('touchmove', (e) => {
-  if (e.target.closest('#waveform')) {
-    // allow seek but prevent over-scroll
-  }
+  if (e.target.closest('#waveform')) {}
 }, { passive: true });
 </script>
 </body>
