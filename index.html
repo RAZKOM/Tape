@@ -224,6 +224,63 @@
     color: var(--ink-faint);
   }
 
+  /* "or paste" alternative below the drop zone */
+  .drop-alt {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 18px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-faint);
+  }
+  .drop-alt::before,
+  .drop-alt::after {
+    content: '';
+    flex: 1;
+    max-width: 40px;
+    height: 1px;
+    background: var(--line);
+  }
+  .paste-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 14px auto 0;
+    padding: 14px 22px;
+    height: 52px;
+    border-radius: 14px;
+    border: 1px solid var(--line-2);
+    background: var(--bg-1);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.15s;
+    width: 100%;
+    justify-content: center;
+  }
+  .paste-btn:active {
+    transform: scale(0.98);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .paste-btn svg { color: var(--ink-dim); transition: color 0.15s; }
+  .paste-btn:active svg { color: var(--accent); }
+  .paste-hint {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-faint);
+    text-align: center;
+    margin-top: 10px;
+  }
+
   /* Creator-mode load card */
   .load-card {
     border: 1px solid var(--line);
@@ -1202,6 +1259,7 @@ const ICONS = {
   volMid: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`,
   volLow: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/></svg>`,
   volMute: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`,
+  clipboard: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>`,
 };
 
 /* ---------- URL encode/decode ---------- */
@@ -1235,9 +1293,11 @@ function boot() {
     state.expectedName = decoded.filename;
     state.comments = decoded.comments;
     renderCreatorIntro();
+    wireGlobalPaste(handleCreatorFile);
   } else {
     state.mode = 'reviewer';
     renderReviewerIntro();
+    wireGlobalPaste(handleReviewerFile);
   }
   $('#modeTag').textContent = state.mode === 'reviewer' ? 'Reviewer' : 'Listener';
   $('#modeTag').classList.toggle('live', state.mode === 'creator');
@@ -1259,9 +1319,16 @@ function renderReviewerIntro() {
           <div class="drop-sub">MP3 · WAV · OGG · FLAC · M4A</div>
         </div>
       </div>
+      <div class="drop-alt">or</div>
+      <button class="paste-btn" id="pasteBtn">
+        ${ICONS.clipboard}
+        <span>Paste from clipboard</span>
+      </button>
+      <div class="paste-hint">Copy an audio file in Files or iMessage, then tap paste</div>
     </section>
   `;
   wireDropZone(handleReviewerFile);
+  wirePasteButton(handleReviewerFile);
 }
 
 /* ============================================================
@@ -1292,10 +1359,16 @@ function renderCreatorIntro() {
           <div class="drop-sub">to play the review</div>
         </div>
       </div>
+      <div class="drop-alt">or</div>
+      <button class="paste-btn" id="pasteBtn">
+        ${ICONS.clipboard}
+        <span>Paste from clipboard</span>
+      </button>
       <div id="fileErr"></div>
     </section>
   `;
   wireDropZone(handleCreatorFile);
+  wirePasteButton(handleCreatorFile);
 }
 
 function escapeHtml(s) {
@@ -1328,8 +1401,141 @@ function wireDropZone(onFile) {
   };
 }
 
+/* ---------- Paste handling ----------
+   Supports three input paths:
+   1. Tapping the "Paste from clipboard" button → navigator.clipboard.read()
+      (modern browsers + iOS Safari 16.4+)
+   2. Global Cmd+V / Ctrl+V → e.clipboardData.files
+   3. Pasted text that turns out to be a URL pointing to an audio file →
+      fetched as a blob (handles edge cases like blob: URLs or data: URLs)
+*/
+function isAudioFile(file) {
+  if (!file) return false;
+  if (file.type && file.type.startsWith('audio/')) return true;
+  // Some clipboards strip the MIME type; fall back to extension
+  return /\.(mp3|wav|ogg|flac|m4a|aac|wma|opus)$/i.test(file.name || '');
+}
+
+function inferFilename(blob, fallback = 'clipboard-audio') {
+  // Try to guess an extension from the MIME type
+  const mime = (blob.type || '').toLowerCase();
+  const extMap = {
+    'audio/mpeg': 'mp3',
+    'audio/mp3': 'mp3',
+    'audio/wav': 'wav',
+    'audio/wave': 'wav',
+    'audio/x-wav': 'wav',
+    'audio/ogg': 'ogg',
+    'audio/flac': 'flac',
+    'audio/x-flac': 'flac',
+    'audio/mp4': 'm4a',
+    'audio/x-m4a': 'm4a',
+    'audio/aac': 'aac',
+    'audio/webm': 'webm',
+  };
+  const ext = extMap[mime] || 'mp3';
+  return `${fallback}.${ext}`;
+}
+
+async function tryClipboardRead(onFile) {
+  if (!navigator.clipboard || !navigator.clipboard.read) {
+    toast('Paste not supported in this browser');
+    return false;
+  }
+  try {
+    const items = await navigator.clipboard.read();
+    for (const item of items) {
+      // Look for any audio MIME type the clipboard reports
+      const audioType = item.types.find(t => t.startsWith('audio/'));
+      if (audioType) {
+        const blob = await item.getType(audioType);
+        // Blobs from clipboard don't have a name; wrap as a File with an inferred one
+        const filename = inferFilename(blob,
+          state.mode === 'creator' ? state.expectedName.replace(/\.[^.]+$/, '') : 'pasted-audio');
+        const file = new File([blob], filename, { type: blob.type });
+        onFile(file, { fromPaste: true });
+        return true;
+      }
+      // No direct audio MIME — try text in case it's a URL
+      if (item.types.includes('text/plain')) {
+        const textBlob = await item.getType('text/plain');
+        const text = (await textBlob.text()).trim();
+        if (text && await tryFetchUrlAsAudio(text, onFile)) return true;
+      }
+    }
+    toast('No audio in clipboard');
+    return false;
+  } catch (err) {
+    // User denied, or no clipboard access (e.g. focus issue, HTTP context)
+    console.warn('Clipboard read failed:', err);
+    if (err.name === 'NotAllowedError') {
+      toast('Clipboard access denied');
+    } else {
+      toast('Could not read clipboard');
+    }
+    return false;
+  }
+}
+
+async function tryFetchUrlAsAudio(text, onFile) {
+  // Accept blob:, data:, http(s): URLs that look like audio
+  if (!/^(blob:|data:audio\/|https?:)/i.test(text)) return false;
+  try {
+    const res = await fetch(text);
+    if (!res.ok) return false;
+    const blob = await res.blob();
+    if (!blob.type.startsWith('audio/')) return false;
+    // Pull a filename from the URL if possible
+    let filename = 'pasted-audio';
+    try {
+      const u = new URL(text);
+      const last = u.pathname.split('/').pop();
+      if (last && /\.[a-z0-9]{2,5}$/i.test(last)) filename = decodeURIComponent(last);
+    } catch (e) {}
+    if (!/\.[a-z0-9]{2,5}$/i.test(filename)) filename = inferFilename(blob, filename);
+    const file = new File([blob], filename, { type: blob.type });
+    onFile(file, { fromPaste: true });
+    return true;
+  } catch (err) {
+    console.warn('URL fetch failed:', err);
+    return false;
+  }
+}
+
+function wirePasteButton(onFile) {
+  const btn = $('#pasteBtn');
+  if (!btn) return;
+  btn.addEventListener('click', () => tryClipboardRead(onFile));
+}
+
+/* Global paste listener — Cmd+V / Ctrl+V anywhere on the page.
+   Skips when focus is inside an input/textarea so it doesn't hijack typing. */
+function wireGlobalPaste(onFile) {
+  document.addEventListener('paste', (e) => {
+    // Don't interfere with text paste into textareas/inputs
+    const target = e.target;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+
+    const items = e.clipboardData && e.clipboardData.files;
+    if (items && items.length > 0) {
+      for (const f of items) {
+        if (isAudioFile(f)) {
+          e.preventDefault();
+          // If the clipboard file has no real name (just "image.png" or empty), infer one
+          const file = f.name ? f : new File([f], inferFilename(f), { type: f.type });
+          onFile(file, { fromPaste: true });
+          return;
+        }
+      }
+    }
+    // Try text fallback (a URL to an audio file)
+    const text = e.clipboardData && e.clipboardData.getData('text/plain');
+    if (text) tryFetchUrlAsAudio(text.trim(), onFile);
+  });
+}
+
 /* ---------- Reviewer: handle a chosen file ---------- */
-function handleReviewerFile(file) {
+function handleReviewerFile(file, _opts = {}) {
   if (!file.type.startsWith('audio/') && !/\.(mp3|wav|ogg|flac|m4a|aac)$/i.test(file.name)) {
     toast('Not an audio file');
     return;
@@ -1341,14 +1547,25 @@ function handleReviewerFile(file) {
 }
 
 /* ---------- Creator: handle a chosen file (must match) ---------- */
-function handleCreatorFile(file) {
+function handleCreatorFile(file, opts = {}) {
   const errEl = $('#fileErr');
   if (errEl) errEl.innerHTML = '';
 
-  if (file.name !== state.expectedName) {
-    if (errEl) errEl.innerHTML = `<div class="file-error">This is <strong>${escapeHtml(file.name)}</strong>, but the review is for <strong>${escapeHtml(state.expectedName)}</strong>. Please load the matching file.</div>`;
-    return;
+  const matches = file.name === state.expectedName;
+
+  if (!matches) {
+    if (opts.fromPaste) {
+      // Pasted file usually has an inferred name like "pasted-audio.mp3" — accept it
+      // but warn the listener so they can verify it's the right track.
+      if (errEl) errEl.innerHTML = `<div class="file-error" style="background: rgba(255,107,31,0.08); border-color: rgba(255,107,31,0.4); color: var(--accent-soft);">
+        Pasted audio loaded as <strong>${escapeHtml(file.name)}</strong>. The review was made for <strong>${escapeHtml(state.expectedName)}</strong> — check the waveform looks right.
+      </div>`;
+    } else {
+      if (errEl) errEl.innerHTML = `<div class="file-error">This is <strong>${escapeHtml(file.name)}</strong>, but the review is for <strong>${escapeHtml(state.expectedName)}</strong>. Please load the matching file.</div>`;
+      return;
+    }
   }
+
   state.file = file;
   state.filename = file.name;
   renderPlayer();
