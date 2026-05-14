@@ -1,0 +1,1942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+<meta name="theme-color" content="#0a0908" />
+<title>Tape · timestamped music reviews</title>
+<meta name="description" content="Pin timestamped notes to a song's waveform and share the review as a URL. The audio stays on your device. Only your notes travel.">
+
+<!-- Favicon and home-screen icons -->
+<link rel="icon" type="image/svg+xml" href="public/favicon.svg">
+<link rel="alternate icon" type="image/png" href="public/favicon-32.png">
+<link rel="apple-touch-icon" href="public/apple-touch-icon.png">
+<link rel="mask-icon" href="public/favicon.svg" color="#ff6b1f">
+<meta name="apple-mobile-web-app-title" content="Tape">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="public/manifest.webmanifest">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Tape">
+<meta property="og:title" content="Tape · timestamped music reviews">
+<meta property="og:description" content="Pin timestamped notes to a song's waveform and share the review as a URL. The audio stays on your device. Only your notes travel.">
+<meta property="og:url" content="https://tape.razkom.com">
+<meta property="og:image" content="https://tape.razkom.com/public/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Tape logo with the tagline Pin, Wave, Share on a dark background">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tape · timestamped music reviews">
+<meta name="twitter:description" content="Pin timestamped notes to a song's waveform and share the review as a URL.">
+<meta name="twitter:image" content="https://tape.razkom.com/public/og.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/7.8.6/wavesurfer.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+
+<style>
+  :root {
+    --bg: #0a0908;
+    --bg-1: #131210;
+    --bg-2: #1c1a17;
+    --line: #2a2722;
+    --line-2: #3a342c;
+    --ink: #f4ede0;
+    --ink-dim: #a39d92;
+    --ink-faint: #6b665d;
+    --accent: #ff6b1f;
+    --accent-soft: #ff8a4a;
+    --accent-glow: rgba(255, 107, 31, 0.35);
+    --danger: #e54848;
+    --serif: 'Fraunces', 'Times New Roman', serif;
+    --sans: 'Geist', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-top: env(safe-area-inset-top, 0px);
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0; padding: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.5;
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Subtle film grain over the whole app */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Atmospheric glow at top */
+  body::after {
+    content: '';
+    position: fixed; top: -200px; left: 50%;
+    width: 600px; height: 400px;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, var(--accent-glow), transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding-top: var(--safe-top);
+  }
+
+  /* ───── Header ───── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px 8px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--serif);
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+    font-style: italic;
+  }
+  .logo-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 16px var(--accent-glow);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(0.88); }
+  }
+  .mode-tag {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-faint);
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+  }
+  .mode-tag.live { color: var(--accent); border-color: var(--accent); }
+
+  /* ───── Main scroll area ───── */
+  main {
+    flex: 1;
+    padding: 20px 22px 140px;
+    max-width: 980px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* ───── Intro / upload screen ───── */
+  .intro {
+    text-align: center;
+    padding: 40px 0 30px;
+    animation: fadeUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .intro h1 {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-size: clamp(38px, 9vw, 68px);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    margin: 0 0 18px;
+  }
+  .intro h1 em {
+    font-style: italic;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .intro p {
+    color: var(--ink-dim);
+    max-width: 460px;
+    margin: 0 auto 28px;
+    font-size: 15px;
+  }
+
+  /* Drop zone */
+  .drop {
+    position: relative;
+    border: 1.5px dashed var(--line-2);
+    border-radius: 22px;
+    padding: 44px 24px;
+    background: linear-gradient(180deg, var(--bg-1), var(--bg));
+    transition: all 0.25s ease;
+    cursor: pointer;
+    overflow: hidden;
+  }
+  .drop:active { transform: scale(0.99); }
+  .drop.hover {
+    border-color: var(--accent);
+    background: linear-gradient(180deg, rgba(255,107,31,0.06), var(--bg));
+  }
+  .drop-inner { position: relative; z-index: 1; text-align: center; }
+  .drop-icon {
+    width: 56px; height: 56px;
+    margin: 0 auto 16px;
+    border-radius: 16px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent);
+  }
+  .drop-title {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+  .drop-sub {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-faint);
+  }
+
+  /* Creator-mode load card */
+  .load-card {
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: linear-gradient(180deg, var(--bg-1), var(--bg));
+    padding: 32px 24px;
+    animation: fadeUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .load-card .filename-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-2);
+    border: 1px solid var(--line-2);
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .load-card .filename-pill svg { flex-shrink: 0; color: var(--accent); }
+  .load-card .meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-faint);
+    margin-bottom: 14px;
+  }
+  .load-card h2 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(26px, 6vw, 34px);
+    letter-spacing: -0.02em;
+    margin: 18px 0 22px;
+    line-height: 1.15;
+  }
+  .load-card h2 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .load-card .stats {
+    display: flex; gap: 20px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .stat .num {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .stat .lbl {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-faint);
+  }
+
+  /* ───── Player screen ───── */
+  .player {
+    animation: fadeUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .track-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+  .track-title {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(22px, 5vw, 30px);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin: 0 0 6px;
+    word-break: break-word;
+  }
+  .track-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-faint);
+  }
+
+  /* Waveform container */
+  .wave-wrap {
+    position: relative;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(255,107,31,0.04), transparent 60%),
+      linear-gradient(180deg, var(--bg-1), var(--bg));
+    padding: 24px 18px 16px;
+    overflow: hidden;
+    touch-action: none; /* required so vertical drags don't trigger page scroll while scrubbing */
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .wave-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 25% 100%;
+    opacity: 0.35;
+    pointer-events: none;
+  }
+  #waveform {
+    position: relative;
+    z-index: 1;
+    cursor: ew-resize;
+  }
+  #waveform > div { overflow: visible !important; } /* let pins show above */
+
+  /* Scrub overlay — floating readout that follows the finger */
+  .scrubber {
+    position: fixed;
+    z-index: 300;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .scrubber.active { opacity: 1; }
+  .scrubber-time {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 42px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    text-shadow: 0 4px 24px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 0, 0, 0.6);
+    font-variant-numeric: tabular-nums;
+  }
+  .scrubber-precision {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    padding: 4px 10px;
+    border-radius: 999px;
+    box-shadow: 0 4px 18px var(--accent-glow);
+  }
+  .scrubber-hint {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-faint);
+    background: rgba(10, 9, 8, 0.85);
+    padding: 3px 8px;
+    border-radius: 6px;
+    backdrop-filter: blur(8px);
+  }
+
+  /* Live cursor line that follows the scrub position on the wave itself */
+  .scrub-cursor {
+    position: absolute;
+    top: 8px; bottom: 8px;
+    width: 2px;
+    background: var(--ink);
+    box-shadow: 0 0 12px var(--ink), 0 0 2px rgba(0,0,0,0.8);
+    pointer-events: none;
+    z-index: 3;
+    opacity: 0;
+    transition: opacity 0.15s;
+    transform: translateX(-50%);
+  }
+  .scrub-cursor.active { opacity: 1; }
+
+  /* Subtle hint shown briefly when the player loads */
+  .scrub-tip {
+    position: absolute;
+    left: 50%; bottom: 56px;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-faint);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    padding: 5px 10px;
+    border-radius: 999px;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 4;
+    animation: tipFade 4.5s ease forwards;
+  }
+  @keyframes tipFade {
+    0% { opacity: 0; }
+    15%, 70% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -8px); }
+  }
+
+  /* Pin layer (overlays waveform) */
+  .pins {
+    position: absolute;
+    left: 18px; right: 18px;
+    top: 24px; bottom: 16px;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .pin {
+    position: absolute;
+    top: -8px; bottom: -8px;
+    width: 2px;
+    transform: translateX(-50%);
+    pointer-events: auto;
+    cursor: pointer;
+  }
+  .pin .stem {
+    position: absolute;
+    top: 0; bottom: 22px;
+    left: 50%;
+    width: 2px;
+    transform: translateX(-50%);
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+    opacity: 0.75;
+    transition: opacity 0.2s, box-shadow 0.2s;
+  }
+  .pin .knob {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    transition: transform 0.2s, background 0.2s, color 0.2s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4), 0 0 0 4px rgba(10,9,8,0.9);
+  }
+  .pin:active .knob, .pin.active .knob {
+    transform: translateX(-50%) scale(1.18);
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .pin:active .stem, .pin.active .stem {
+    opacity: 1;
+    box-shadow: 0 0 16px var(--accent);
+  }
+
+  /* Time readout */
+  .time-row {
+    display: flex; justify-content: space-between;
+    margin-top: 14px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink-dim);
+    letter-spacing: 0.04em;
+    position: relative;
+    z-index: 1;
+  }
+  .time-row .current { color: var(--accent); font-weight: 500; }
+
+  /* ───── Comments list ───── */
+  .comments-section {
+    margin-top: 32px;
+  }
+  .section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .section-head h3 {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .section-head .count {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-faint);
+  }
+  .comments {
+    display: flex; flex-direction: column;
+    gap: 10px;
+  }
+  .comment {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px;
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 56px;
+    animation: slideIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .comment:active { transform: scale(0.99); background: var(--bg-2); }
+  .comment.playing {
+    border-color: var(--accent);
+    background: linear-gradient(90deg, rgba(255,107,31,0.08), var(--bg-1));
+  }
+  .comment .ts {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    background: rgba(255,107,31,0.1);
+    padding: 4px 8px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    min-width: 56px;
+    text-align: center;
+  }
+  .comment .text {
+    flex: 1;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--ink);
+    word-break: break-word;
+  }
+  .comment .del {
+    background: transparent;
+    border: none;
+    color: var(--ink-faint);
+    padding: 8px;
+    margin: -8px -8px -8px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    min-width: 40px; min-height: 40px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .comment .del:active { color: var(--danger); background: rgba(229,72,72,0.08); }
+
+  .empty {
+    text-align: center;
+    padding: 36px 20px;
+    color: var(--ink-faint);
+    font-family: var(--mono);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    border: 1px dashed var(--line);
+    border-radius: 14px;
+  }
+
+  /* ───── Bottom control bar (fixed) ───── */
+  .controls {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    padding: 12px 16px calc(12px + var(--safe-bottom));
+    background: linear-gradient(180deg, transparent, var(--bg) 35%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 100;
+  }
+  .controls-inner {
+    max-width: 980px;
+    margin: 0 auto;
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 0 10px 10px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  }
+  .controls-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .play-btn {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    border: none;
+    background: var(--accent);
+    color: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.15s, background 0.2s;
+    box-shadow: 0 4px 18px var(--accent-glow);
+  }
+  .play-btn:active { transform: scale(0.94); background: var(--accent-soft); }
+  .play-btn svg { width: 22px; height: 22px; }
+
+  /* Skip back / forward buttons */
+  .skip-btn {
+    width: 48px; height: 56px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: var(--bg-2);
+    color: var(--ink-dim);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .skip-btn:active {
+    transform: scale(0.92);
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .skip-btn:disabled { opacity: 0.4; pointer-events: none; }
+
+  /* Volume row (separate row above main controls) */
+  .vol-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 14px 10px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 10px;
+  }
+  .vol-btn {
+    width: 36px; height: 36px;
+    border: none;
+    background: transparent;
+    color: var(--ink-dim);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    border-radius: 8px;
+    flex-shrink: 0;
+    transition: color 0.15s, background 0.15s;
+  }
+  .vol-btn:active { color: var(--accent); background: rgba(255,107,31,0.08); }
+  .vol-btn.muted { color: var(--danger); }
+
+  /* Range slider — custom themed */
+  .vol-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 28px; /* generous tap target */
+    background: transparent;
+    cursor: pointer;
+    margin: 0;
+    padding: 0;
+    touch-action: manipulation;
+  }
+  .vol-slider::-webkit-slider-runnable-track {
+    height: 4px;
+    background: linear-gradient(
+      to right,
+      var(--accent) 0%,
+      var(--accent) var(--vol-pct, 100%),
+      var(--line-2) var(--vol-pct, 100%),
+      var(--line-2) 100%
+    );
+    border-radius: 2px;
+  }
+  .vol-slider::-moz-range-track {
+    height: 4px;
+    background: var(--line-2);
+    border-radius: 2px;
+  }
+  .vol-slider::-moz-range-progress {
+    height: 4px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+  .vol-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--ink);
+    border: 3px solid var(--bg-1);
+    margin-top: -8px;
+    cursor: grab;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    transition: transform 0.15s;
+  }
+  .vol-slider::-moz-range-thumb {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--ink);
+    border: 3px solid var(--bg-1);
+    cursor: grab;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  }
+  .vol-slider:active::-webkit-slider-thumb { transform: scale(1.2); }
+  .vol-pct-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+    min-width: 32px;
+    text-align: right;
+    letter-spacing: 0.04em;
+  }
+
+  .add-btn {
+    flex: 1;
+    height: 56px;
+    border-radius: 14px;
+    border: 1px solid var(--accent);
+    background: rgba(255,107,31,0.08);
+    color: var(--accent);
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: 15px;
+    letter-spacing: 0.01em;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .add-btn:active { transform: scale(0.98); background: rgba(255,107,31,0.18); }
+  .add-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .share-btn {
+    height: 56px;
+    padding: 0 22px;
+    border-radius: 14px;
+    border: none;
+    background: var(--ink);
+    color: var(--bg);
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: transform 0.15s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .share-btn:active { transform: scale(0.97); }
+  .share-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Creator mode: simpler controls */
+  .ghost-btn {
+    height: 56px;
+    padding: 0 22px;
+    border-radius: 14px;
+    border: 1px solid var(--line-2);
+    background: var(--bg-2);
+    color: var(--ink-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .ghost-btn:active { background: var(--bg-1); transform: scale(0.97); }
+
+  /* ───── Bottom sheet (comment input + share + comment view) ───── */
+  .sheet-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .sheet-backdrop.open { opacity: 1; pointer-events: auto; }
+
+  .sheet {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 201;
+    background: var(--bg-1);
+    border-top: 1px solid var(--line);
+    border-radius: 24px 24px 0 0;
+    padding: 14px 22px calc(28px + var(--safe-bottom));
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 -20px 60px rgba(0,0,0,0.5);
+  }
+  .sheet.open { transform: translateY(0); }
+  .sheet-handle {
+    width: 40px; height: 4px;
+    background: var(--line-2);
+    border-radius: 2px;
+    margin: 0 auto 18px;
+  }
+  .sheet-title {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
+  }
+  .sheet-ts {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+  .sheet-text {
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--ink);
+    margin-bottom: 6px;
+    word-break: break-word;
+  }
+  .sheet textarea {
+    width: 100%;
+    min-height: 90px;
+    padding: 14px 16px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.5;
+    resize: vertical;
+    outline: none;
+    transition: border 0.2s;
+  }
+  .sheet textarea:focus { border-color: var(--accent); }
+  .sheet-actions {
+    display: flex; gap: 10px;
+    margin-top: 14px;
+  }
+  .sheet-actions button {
+    flex: 1;
+    height: 52px;
+    border-radius: 12px;
+    border: none;
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: 15px;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .sheet-actions button:active { transform: scale(0.97); }
+  .btn-cancel {
+    background: var(--bg-2);
+    color: var(--ink-dim);
+    border: 1px solid var(--line) !important;
+  }
+  .btn-confirm {
+    background: var(--accent);
+    color: var(--bg);
+  }
+
+  /* Share sheet specifics */
+  .share-link-box {
+    display: flex;
+    gap: 8px;
+    margin: 18px 0 12px;
+  }
+  .share-link-box input {
+    flex: 1;
+    height: 52px;
+    padding: 0 16px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 13px;
+    outline: none;
+  }
+  .copy-btn {
+    height: 52px;
+    padding: 0 20px;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 12px;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .copy-btn:active { transform: scale(0.96); }
+  .copy-btn.copied { background: #5ec578; }
+  .share-hint {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-faint);
+    text-align: center;
+    margin-top: 8px;
+  }
+
+  /* Mismatched filename error */
+  .file-error {
+    background: rgba(229,72,72,0.08);
+    border: 1px solid rgba(229,72,72,0.3);
+    color: #ff8a8a;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    margin-top: 14px;
+    animation: shake 0.4s;
+  }
+
+  /* ───── Toast ───── */
+  .toast {
+    position: fixed;
+    top: calc(20px + var(--safe-top));
+    left: 50%;
+    transform: translate(-50%, -120%);
+    background: var(--ink);
+    color: var(--bg);
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 500;
+    z-index: 500;
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  .toast.show { transform: translate(-50%, 0); }
+
+  /* ───── Animations ───── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-6px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+
+  .hidden { display: none !important; }
+
+  /* Mobile-specific tweaks */
+  @media (max-width: 640px) {
+    .header { padding: 14px 18px 6px; }
+    main { padding: 16px 18px 180px; } /* extra room for two-row controls */
+    .wave-wrap { padding: 22px 14px 14px; }
+    .pins { left: 14px; right: 14px; top: 22px; bottom: 14px; }
+    .share-btn { padding: 0 16px; font-size: 14px; }
+    .controls-row { gap: 8px; }
+    .controls-inner { padding: 0 8px 8px; }
+    .skip-btn { width: 44px; }
+  }
+
+  /* Hide share-btn label on very small */
+  @media (max-width: 380px) {
+    .share-btn-label { display: none; }
+    .share-btn { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="header">
+    <div class="logo">
+      <span class="logo-dot"></span>
+      <span>Tape</span>
+    </div>
+    <div class="mode-tag" id="modeTag">— —</div>
+  </header>
+
+  <main id="main">
+    <!-- Dynamic screens rendered here -->
+  </main>
+
+  <!-- Bottom controls (player mode) -->
+  <div class="controls hidden" id="controls">
+    <div class="controls-inner" id="controlsInner">
+      <!-- Filled by JS depending on mode -->
+    </div>
+  </div>
+</div>
+
+<!-- Bottom sheet backdrop + sheet -->
+<div class="sheet-backdrop" id="sheetBackdrop"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <div id="sheetContent"></div>
+</div>
+
+<!-- Floating scrubber readout (follows finger during scrub) -->
+<div class="scrubber" id="scrubber">
+  <div class="scrubber-hint" id="scrubberHint">Drag down for finer control</div>
+  <div class="scrubber-precision" id="scrubberPrecision">1× speed</div>
+  <div class="scrubber-time" id="scrubberTime">0:00</div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">Copied</div>
+
+<!-- Hidden file input -->
+<input type="file" id="fileInput" accept="audio/*" style="display:none">
+
+<script>
+/* ============================================================
+   Tape — timestamped music reviews
+   Two modes: REVIEWER (no hash) and CREATOR (hash with data)
+   ============================================================ */
+
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+const state = {
+  mode: null,          // 'reviewer' | 'creator'
+  ws: null,            // WaveSurfer instance
+  file: null,          // File object
+  filename: null,      // string
+  duration: 0,
+  comments: [],        // [{t, c}]
+  expectedName: null,  // for creator mode
+  ready: false,
+  isPlaying: false,
+  activePinIdx: null,
+};
+
+/* ---------- Utilities ---------- */
+function fmtTime(s) {
+  if (!isFinite(s) || s < 0) s = 0;
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+function toast(msg, ms = 1800) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+/* Icons (inline SVG factory) */
+const ICONS = {
+  upload: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`,
+  play: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`,
+  pause: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>`,
+  plus: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+  share: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>`,
+  music: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`,
+  trash: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>`,
+  copy: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`,
+  check: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+  back5: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 8a7 7 0 1 1-7 7"/><polyline points="5.5 3 5.5 8 10.5 8"/><text x="12" y="16" font-family="JetBrains Mono, monospace" font-size="7" font-weight="700" fill="currentColor" stroke="none" text-anchor="middle">5</text></svg>`,
+  fwd5: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 8a7 7 0 1 0 7 7"/><polyline points="18.5 3 18.5 8 13.5 8"/><text x="12" y="16" font-family="JetBrains Mono, monospace" font-size="7" font-weight="700" fill="currentColor" stroke="none" text-anchor="middle">5</text></svg>`,
+  volHigh: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`,
+  volMid: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`,
+  volLow: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/></svg>`,
+  volMute: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`,
+};
+
+/* ---------- URL encode/decode ---------- */
+function encodePayload(filename, comments) {
+  const data = { f: filename, c: comments.map(c => ({ t: +c.t.toFixed(2), c: c.c })) };
+  const json = JSON.stringify(data);
+  return LZString.compressToEncodedURIComponent(json);
+}
+function decodePayload(hash) {
+  try {
+    const raw = hash.startsWith('#') ? hash.slice(1) : hash;
+    if (!raw) return null;
+    const json = LZString.decompressFromEncodedURIComponent(raw);
+    if (!json) return null;
+    const data = JSON.parse(json);
+    if (!data.f || !Array.isArray(data.c)) return null;
+    return { filename: data.f, comments: data.c.map(c => ({ t: +c.t, c: String(c.c) })) };
+  } catch (e) {
+    console.warn('Failed to decode hash:', e);
+    return null;
+  }
+}
+
+/* ============================================================
+   MODE DETECTION + BOOT
+   ============================================================ */
+function boot() {
+  const decoded = decodePayload(location.hash);
+  if (decoded) {
+    state.mode = 'creator';
+    state.expectedName = decoded.filename;
+    state.comments = decoded.comments;
+    renderCreatorIntro();
+  } else {
+    state.mode = 'reviewer';
+    renderReviewerIntro();
+  }
+  $('#modeTag').textContent = state.mode === 'reviewer' ? 'Reviewer' : 'Listener';
+  $('#modeTag').classList.toggle('live', state.mode === 'creator');
+}
+
+/* ============================================================
+   REVIEWER MODE — Intro / drop zone
+   ============================================================ */
+function renderReviewerIntro() {
+  const main = $('#main');
+  main.innerHTML = `
+    <section class="intro">
+      <h1>Mark the <em>moments</em><br>that move you.</h1>
+      <p>Drop a track, pin your reactions to the waveform, then share the link. The audio never leaves your device — only your timestamped notes travel.</p>
+      <div class="drop" id="drop">
+        <div class="drop-inner">
+          <div class="drop-icon">${ICONS.upload}</div>
+          <div class="drop-title">Drop an audio file</div>
+          <div class="drop-sub">MP3 · WAV · OGG · FLAC · M4A</div>
+        </div>
+      </div>
+    </section>
+  `;
+  wireDropZone(handleReviewerFile);
+}
+
+/* ============================================================
+   CREATOR MODE — Intro / load prompt
+   ============================================================ */
+function renderCreatorIntro() {
+  const main = $('#main');
+  const n = state.comments.length;
+  main.innerHTML = `
+    <section class="load-card">
+      <div class="meta">A review awaits</div>
+      <h2>Someone left <em>${n} note${n===1?'':'s'}</em> on a track for you.</h2>
+      <div class="filename-pill">
+        ${ICONS.music}
+        <span>${escapeHtml(state.expectedName)}</span>
+      </div>
+      <div style="height: 20px"></div>
+      <div class="stats">
+        <div class="stat">
+          <div class="num">${n}</div>
+          <div class="lbl">Comments</div>
+        </div>
+      </div>
+      <div class="drop" id="drop" style="padding: 28px 20px;">
+        <div class="drop-inner">
+          <div class="drop-icon">${ICONS.upload}</div>
+          <div class="drop-title" style="font-size:18px;">Load <em style="font-style:italic;color:var(--accent)">${escapeHtml(state.expectedName)}</em></div>
+          <div class="drop-sub">to play the review</div>
+        </div>
+      </div>
+      <div id="fileErr"></div>
+    </section>
+  `;
+  wireDropZone(handleCreatorFile);
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------- Drop zone wiring (shared) ---------- */
+function wireDropZone(onFile) {
+  const drop = $('#drop');
+  const input = $('#fileInput');
+  if (!drop) return;
+
+  const open = () => input.click();
+  drop.addEventListener('click', open);
+
+  ['dragenter','dragover'].forEach(ev =>
+    drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('hover'); })
+  );
+  ['dragleave','drop'].forEach(ev =>
+    drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('hover'); })
+  );
+  drop.addEventListener('drop', e => {
+    const f = e.dataTransfer.files[0];
+    if (f) onFile(f);
+  });
+  input.onchange = e => {
+    const f = e.target.files[0];
+    if (f) onFile(f);
+    input.value = ''; // allow re-picking same file
+  };
+}
+
+/* ---------- Reviewer: handle a chosen file ---------- */
+function handleReviewerFile(file) {
+  if (!file.type.startsWith('audio/') && !/\.(mp3|wav|ogg|flac|m4a|aac)$/i.test(file.name)) {
+    toast('Not an audio file');
+    return;
+  }
+  state.file = file;
+  state.filename = file.name;
+  state.comments = [];
+  renderPlayer();
+}
+
+/* ---------- Creator: handle a chosen file (must match) ---------- */
+function handleCreatorFile(file) {
+  const errEl = $('#fileErr');
+  if (errEl) errEl.innerHTML = '';
+
+  if (file.name !== state.expectedName) {
+    if (errEl) errEl.innerHTML = `<div class="file-error">This is <strong>${escapeHtml(file.name)}</strong>, but the review is for <strong>${escapeHtml(state.expectedName)}</strong>. Please load the matching file.</div>`;
+    return;
+  }
+  state.file = file;
+  state.filename = file.name;
+  renderPlayer();
+}
+
+/* ============================================================
+   PLAYER UI — used by both modes
+   ============================================================ */
+function renderPlayer() {
+  const main = $('#main');
+  main.innerHTML = `
+    <section class="player">
+      <div class="track-head">
+        <div>
+          <h2 class="track-title">${escapeHtml(state.filename)}</h2>
+          <div class="track-sub" id="trackSub">Loading waveform…</div>
+        </div>
+      </div>
+
+      <div class="wave-wrap" id="waveWrap">
+        <div id="waveform"></div>
+        <div class="scrub-cursor" id="scrubCursor"></div>
+        <div class="pins" id="pins"></div>
+        <div class="scrub-tip" id="scrubTip">Drag to scrub · pull down for fine control</div>
+        <div class="time-row">
+          <span class="current" id="curTime">0:00</span>
+          <span id="durTime">0:00</span>
+        </div>
+      </div>
+
+      <div class="comments-section">
+        <div class="section-head">
+          <h3>Notes</h3>
+          <span class="count" id="commentCount">0</span>
+        </div>
+        <div class="comments" id="commentsList"></div>
+      </div>
+    </section>
+  `;
+
+  // Render bottom controls
+  renderControls();
+
+  // Boot WaveSurfer
+  initWaveSurfer();
+}
+
+function renderControls() {
+  $('#controls').classList.remove('hidden');
+  const inner = $('#controlsInner');
+
+  // Shared markup: volume row on top, transport row below
+  const volRow = `
+    <div class="vol-row">
+      <button class="vol-btn" id="volBtn" aria-label="Mute">${ICONS.volHigh}</button>
+      <input type="range" class="vol-slider" id="volSlider" min="0" max="100" value="100" aria-label="Volume">
+      <span class="vol-pct-label" id="volLabel">100</span>
+    </div>
+  `;
+
+  if (state.mode === 'reviewer') {
+    inner.innerHTML = volRow + `
+      <div class="controls-row">
+        <button class="skip-btn" id="back5Btn" aria-label="Back 5 seconds">${ICONS.back5}</button>
+        <button class="play-btn" id="playBtn" aria-label="Play/Pause">${ICONS.play}</button>
+        <button class="skip-btn" id="fwd5Btn" aria-label="Forward 5 seconds">${ICONS.fwd5}</button>
+        <button class="add-btn" id="addBtn" disabled>${ICONS.plus}<span>Pin</span></button>
+        <button class="share-btn" id="shareBtn" disabled>${ICONS.share}<span class="share-btn-label">Share</span></button>
+      </div>
+    `;
+    $('#playBtn').onclick = togglePlay;
+    $('#back5Btn').onclick = () => skipBy(-5);
+    $('#fwd5Btn').onclick = () => skipBy(5);
+    $('#addBtn').onclick = openCommentSheet;
+    $('#shareBtn').onclick = openShareSheet;
+  } else {
+    inner.innerHTML = volRow + `
+      <div class="controls-row">
+        <button class="skip-btn" id="back5Btn" aria-label="Back 5 seconds">${ICONS.back5}</button>
+        <button class="play-btn" id="playBtn" aria-label="Play/Pause">${ICONS.play}</button>
+        <button class="skip-btn" id="fwd5Btn" aria-label="Forward 5 seconds">${ICONS.fwd5}</button>
+        <button class="add-btn" id="addBtn" disabled style="cursor:default; pointer-events:none; opacity:0.7;">
+          <span style="font-family: var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:0.16em;">
+            Tap a pin to read
+          </span>
+        </button>
+      </div>
+    `;
+    $('#playBtn').onclick = togglePlay;
+    $('#back5Btn').onclick = () => skipBy(-5);
+    $('#fwd5Btn').onclick = () => skipBy(5);
+  }
+
+  wireVolumeControls();
+}
+
+/* ---------- Skip back / forward ---------- */
+function skipBy(seconds) {
+  if (!state.ready || !state.duration) return;
+  const current = state.ws.getCurrentTime();
+  const target = Math.max(0, Math.min(state.duration, current + seconds));
+  state.ws.seekTo(target / state.duration);
+}
+
+/* ---------- Volume ---------- */
+function wireVolumeControls() {
+  const slider = $('#volSlider');
+  const label = $('#volLabel');
+  const btn = $('#volBtn');
+  if (!slider) return;
+
+  // Restore saved volume (last-used pref, in-memory only — no localStorage)
+  const initial = state.lastVolume != null ? state.lastVolume : 100;
+  slider.value = initial;
+  applyVolume(initial, false);
+
+  slider.addEventListener('input', (e) => {
+    const v = +e.target.value;
+    applyVolume(v, false);
+  });
+
+  btn.addEventListener('click', () => {
+    if (state.muted) {
+      // unmute → restore previous level
+      applyVolume(state.preMuteVolume || 100, false);
+      state.muted = false;
+      slider.value = state.preMuteVolume || 100;
+    } else {
+      state.preMuteVolume = +slider.value;
+      applyVolume(0, true);
+      slider.value = 0;
+      state.muted = true;
+    }
+  });
+}
+
+function applyVolume(pct, isMuteToggle) {
+  const slider = $('#volSlider');
+  const label = $('#volLabel');
+  const btn = $('#volBtn');
+  if (!slider) return;
+
+  const vol = pct / 100;
+  if (state.ws) {
+    try { state.ws.setVolume(vol); } catch (e) {}
+  }
+  state.lastVolume = pct;
+
+  // Update slider fill (WebKit needs this CSS var trick)
+  slider.style.setProperty('--vol-pct', pct + '%');
+  label.textContent = pct;
+
+  // Swap volume icon based on level
+  if (!isMuteToggle) state.muted = (pct === 0);
+  let icon;
+  if (pct === 0) icon = ICONS.volMute;
+  else if (pct < 33) icon = ICONS.volLow;
+  else if (pct < 66) icon = ICONS.volMid;
+  else icon = ICONS.volHigh;
+  btn.innerHTML = icon;
+  btn.classList.toggle('muted', pct === 0);
+}
+
+/* ---------- WaveSurfer setup ---------- */
+function initWaveSurfer() {
+  if (state.ws) {
+    try { state.ws.destroy(); } catch (e) {}
+    state.ws = null;
+  }
+
+  const ws = WaveSurfer.create({
+    container: '#waveform',
+    waveColor: '#3a342c',
+    progressColor: '#ff6b1f',
+    cursorColor: '#f4ede0',
+    cursorWidth: 2,
+    barWidth: 2,
+    barGap: 2,
+    barRadius: 2,
+    height: 96,
+    normalize: true,
+    interact: false, // we handle scrubbing ourselves for precision control
+  });
+  state.ws = ws;
+
+  const url = URL.createObjectURL(state.file);
+  ws.load(url);
+
+  ws.on('ready', () => {
+    state.ready = true;
+    state.duration = ws.getDuration();
+    $('#durTime').textContent = fmtTime(state.duration);
+    $('#trackSub').textContent = `${fmtTime(state.duration)} · ready`;
+    if (state.mode === 'reviewer') {
+      $('#addBtn').disabled = false;
+    }
+    // Sync volume from current UI state
+    if (state.lastVolume != null) {
+      try { ws.setVolume(state.lastVolume / 100); } catch (e) {}
+    }
+    renderPins();
+    renderComments();
+    wireScrubGesture();
+  });
+
+  ws.on('timeupdate', (t) => {
+    $('#curTime').textContent = fmtTime(t);
+    highlightActiveComment(t);
+  });
+
+  ws.on('play', () => {
+    state.isPlaying = true;
+    $('#playBtn').innerHTML = ICONS.pause;
+  });
+  ws.on('pause', () => {
+    state.isPlaying = false;
+    $('#playBtn').innerHTML = ICONS.play;
+  });
+  ws.on('finish', () => {
+    state.isPlaying = false;
+    $('#playBtn').innerHTML = ICONS.play;
+  });
+}
+
+function togglePlay() {
+  if (!state.ready) return;
+  state.ws.playPause();
+}
+
+/* ---------- Pins on waveform ---------- */
+function renderPins() {
+  const layer = $('#pins');
+  if (!layer || !state.duration) return;
+  layer.innerHTML = '';
+  state.comments
+    .map((c, i) => ({ ...c, _idx: i }))
+    .sort((a,b) => a.t - b.t)
+    .forEach((c, displayIdx) => {
+      const pct = (c.t / state.duration) * 100;
+      const pin = document.createElement('div');
+      pin.className = 'pin';
+      pin.style.left = pct + '%';
+      pin.dataset.idx = c._idx;
+      pin.innerHTML = `
+        <div class="stem"></div>
+        <div class="knob">${displayIdx + 1}</div>
+      `;
+      pin.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = +pin.dataset.idx;
+        seekToComment(idx);
+      });
+      layer.appendChild(pin);
+    });
+}
+
+/* ---------- Comments list ---------- */
+function renderComments() {
+  const list = $('#commentsList');
+  const countEl = $('#commentCount');
+  if (!list) return;
+
+  const sorted = state.comments
+    .map((c, i) => ({ ...c, _idx: i }))
+    .sort((a, b) => a.t - b.t);
+
+  countEl.textContent = sorted.length;
+
+  if (sorted.length === 0) {
+    list.innerHTML = state.mode === 'reviewer'
+      ? `<div class="empty">Play the track and tap “Pin comment” to drop a note at any moment</div>`
+      : `<div class="empty">No notes on this track</div>`;
+  } else {
+    list.innerHTML = sorted.map(c => `
+      <div class="comment" data-idx="${c._idx}">
+        <div class="ts">${fmtTime(c.t)}</div>
+        <div class="text">${escapeHtml(c.c)}</div>
+        ${state.mode === 'reviewer'
+          ? `<button class="del" data-idx="${c._idx}" aria-label="Delete">${ICONS.trash}</button>`
+          : ''}
+      </div>
+    `).join('');
+  }
+
+  // Wire up tap-to-seek
+  list.querySelectorAll('.comment').forEach(el => {
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('.del')) return;
+      seekToComment(+el.dataset.idx);
+    });
+  });
+  list.querySelectorAll('.del').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteComment(+el.dataset.idx);
+    });
+  });
+
+  // Enable share button if reviewer has at least one comment
+  if (state.mode === 'reviewer') {
+    const sb = $('#shareBtn');
+    if (sb) sb.disabled = state.comments.length === 0;
+  }
+}
+
+function highlightActiveComment(t) {
+  // Active = the latest comment whose timestamp is ≤ current time, within 4s window
+  let active = -1;
+  for (let i = 0; i < state.comments.length; i++) {
+    const c = state.comments[i];
+    if (t >= c.t && t - c.t < 4) {
+      if (active === -1 || state.comments[active].t < c.t) active = i;
+    }
+  }
+  if (active === state.activePinIdx) return;
+  state.activePinIdx = active;
+
+  $$('#commentsList .comment').forEach(el => {
+    el.classList.toggle('playing', +el.dataset.idx === active);
+  });
+  $$('#pins .pin').forEach(el => {
+    el.classList.toggle('active', +el.dataset.idx === active);
+  });
+}
+
+function seekToComment(idx) {
+  const c = state.comments[idx];
+  if (!c || !state.duration) return;
+  state.ws.seekTo(c.t / state.duration);
+  // For creator mode, show the comment in a sheet
+  if (state.mode === 'creator') {
+    openCommentViewSheet(c);
+  }
+}
+
+/* ============================================================
+   PRECISION SCRUBBING
+   Tap and drag horizontally on the waveform to seek.
+   Move your finger vertically away from the wave for finer control:
+     • On the wave (≤16px away):       1× speed
+     • Slight offset (16–60px):        1/2 speed
+     • Medium offset (60–140px):       1/4 speed
+     • Far offset (140–280px):         1/8 speed
+     • Very far (>280px):              1/16 speed (microscopic)
+   ============================================================ */
+function wireScrubGesture() {
+  const wrap = $('#waveWrap');
+  const cursor = $('#scrubCursor');
+  const scrubber = $('#scrubber');
+  const scrubberTime = $('#scrubberTime');
+  const scrubberPrecision = $('#scrubberPrecision');
+  const scrubberHint = $('#scrubberHint');
+  if (!wrap || !state.ws) return;
+
+  let active = false;
+  let startX = 0, startY = 0;
+  let lastX = 0, lastY = 0;
+  let startTime = 0;    // playback time at gesture start (seconds)
+  let currentTime = 0;  // current scrub target (seconds)
+  let wasPlaying = false;
+  let pointerId = null;
+  let dragStarted = false;
+  let pinHit = null;    // pin element if the gesture started on a pin
+
+  const PRECISION_BANDS = [
+    { distance: 16,  factor: 1,    label: '1× speed' },
+    { distance: 60,  factor: 0.5,  label: '½× fine' },
+    { distance: 140, factor: 0.25, label: '¼× finer' },
+    { distance: 280, factor: 0.125, label: '⅛× precise' },
+    { distance: Infinity, factor: 0.0625, label: '1/16× micro' },
+  ];
+
+  function getPrecision(verticalDist) {
+    for (const band of PRECISION_BANDS) {
+      if (verticalDist <= band.distance) return band;
+    }
+    return PRECISION_BANDS[PRECISION_BANDS.length - 1];
+  }
+
+  function getWaveRect() {
+    // The actual scrubbable strip is the area inside the wave-wrap padding
+    const wrapRect = wrap.getBoundingClientRect();
+    return {
+      left: wrapRect.left + 18,
+      right: wrapRect.right - 18,
+      top: wrapRect.top + 24,
+      bottom: wrapRect.bottom - 16,
+      width: wrapRect.width - 36,
+    };
+  }
+
+  function timeFromX(x) {
+    const r = getWaveRect();
+    const pct = Math.max(0, Math.min(1, (x - r.left) / r.width));
+    return pct * state.duration;
+  }
+
+  function updateCursor(t) {
+    const r = getWaveRect();
+    const wrapRect = wrap.getBoundingClientRect();
+    // Position cursor relative to wave-wrap (not viewport)
+    const pct = state.duration > 0 ? (t / state.duration) : 0;
+    const xInWrap = 18 + pct * r.width; // 18px = left padding
+    cursor.style.left = xInWrap + 'px';
+  }
+
+  function updateScrubberPosition(clientX, clientY) {
+    // Float above the finger by ~110px so the user can see the readout
+    scrubber.style.left = clientX + 'px';
+    scrubber.style.top = (clientY - 110) + 'px';
+  }
+
+  function onPointerDown(e) {
+    if (!state.ready || !state.duration) return;
+    // Only respond to primary pointer
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+    // If the gesture starts on a pin's knob, let the pin's click handler win
+    // (we'll only start scrubbing if the user actually drags past the threshold)
+    pinHit = e.target.closest('.pin');
+
+    active = true;
+    dragStarted = false;
+    pointerId = e.pointerId;
+    startX = lastX = e.clientX;
+    startY = lastY = e.clientY;
+    startTime = state.ws.getCurrentTime();
+    currentTime = startTime;
+    wasPlaying = state.isPlaying;
+
+    try { wrap.setPointerCapture(e.pointerId); } catch (err) {}
+  }
+
+  function onPointerMove(e) {
+    if (!active || e.pointerId !== pointerId) return;
+
+    const dx = e.clientX - lastX;
+    const totalDx = e.clientX - startX;
+    const totalDy = Math.abs(e.clientY - startY);
+
+    // Only start scrubbing after a small drag threshold — protects pin taps
+    if (!dragStarted) {
+      const movedEnough = Math.abs(totalDx) > 6 || totalDy > 6;
+      if (!movedEnough) {
+        lastX = e.clientX; lastY = e.clientY;
+        return;
+      }
+      // We're committing to a scrub. If gesture started on a pin, let it go —
+      // user clearly wants to scrub, not tap the pin.
+      pinHit = null;
+      dragStarted = true;
+      // Pause playback during scrub for accuracy
+      if (wasPlaying) state.ws.pause();
+      cursor.classList.add('active');
+      scrubber.classList.add('active');
+    }
+
+    e.preventDefault();
+
+    // Figure out vertical distance from the wave strip
+    const r = getWaveRect();
+    const verticalDist = e.clientY < r.top
+      ? r.top - e.clientY
+      : e.clientY > r.bottom
+        ? e.clientY - r.bottom
+        : 0;
+
+    const band = getPrecision(verticalDist);
+
+    // Apply the precision factor to the horizontal delta
+    // (delta-based scrubbing, so precision feels right regardless of start position)
+    const pxPerSecond = r.width / state.duration;
+    const deltaSeconds = (dx * band.factor) / pxPerSecond;
+    currentTime = Math.max(0, Math.min(state.duration, currentTime + deltaSeconds));
+
+    // Update WaveSurfer position
+    state.ws.seekTo(currentTime / state.duration);
+
+    // Update overlay UI
+    scrubberTime.textContent = fmtTime(currentTime);
+    scrubberPrecision.textContent = band.label;
+    scrubberPrecision.style.background = band.factor === 1 ? 'var(--bg)' : 'var(--accent)';
+    scrubberPrecision.style.color = band.factor === 1 ? 'var(--accent)' : 'var(--bg)';
+    scrubberHint.style.opacity = band.factor === 1 ? '1' : '0';
+
+    updateScrubberPosition(e.clientX, e.clientY);
+    updateCursor(currentTime);
+
+    lastX = e.clientX;
+    lastY = e.clientY;
+  }
+
+  function onPointerUp(e) {
+    if (!active || e.pointerId !== pointerId) return;
+    active = false;
+
+    try { wrap.releasePointerCapture(e.pointerId); } catch (err) {}
+
+    if (dragStarted) {
+      // Real scrub gesture — resume playback if it was playing
+      cursor.classList.remove('active');
+      scrubber.classList.remove('active');
+      if (wasPlaying) state.ws.play();
+      e.preventDefault();
+    } else if (pinHit) {
+      // Plain tap that started on a pin — fire the seek directly,
+      // since pointer capture prevents the pin's own click from firing reliably
+      const idx = +pinHit.dataset.idx;
+      if (!isNaN(idx)) seekToComment(idx);
+    } else {
+      // Plain tap on the waveform — treat as a click-to-seek
+      const r = getWaveRect();
+      const inside = e.clientX >= r.left && e.clientX <= r.right
+                  && e.clientY >= r.top && e.clientY <= r.bottom;
+      if (inside) {
+        const t = timeFromX(e.clientX);
+        state.ws.seekTo(t / state.duration);
+      }
+    }
+
+    pinHit = null;
+    pointerId = null;
+  }
+
+  // Attach
+  wrap.addEventListener('pointerdown', onPointerDown);
+  wrap.addEventListener('pointermove', onPointerMove);
+  wrap.addEventListener('pointerup', onPointerUp);
+  wrap.addEventListener('pointercancel', onPointerUp);
+
+  // Keep cursor positioned while playing too (so user always sees where they are)
+  // Not strictly needed — the wavesurfer progress bar already shows this — but
+  // let's keep things tidy: hide our scrub cursor during normal playback.
+}
+
+/* ---------- Add / delete comments ---------- */
+function addCommentAt(t, text) {
+  state.comments.push({ t, c: text });
+  renderPins();
+  renderComments();
+}
+function deleteComment(idx) {
+  state.comments.splice(idx, 1);
+  renderPins();
+  renderComments();
+}
+
+/* ============================================================
+   BOTTOM SHEET — three flavors
+   ============================================================ */
+function openSheet(html) {
+  $('#sheetContent').innerHTML = html;
+  $('#sheet').classList.add('open');
+  $('#sheetBackdrop').classList.add('open');
+}
+function closeSheet() {
+  $('#sheet').classList.remove('open');
+  $('#sheetBackdrop').classList.remove('open');
+}
+$('#sheetBackdrop').addEventListener('click', closeSheet);
+
+/* — Add comment sheet (reviewer) —
+   Captures the timestamp at the moment of opening, but lets the music
+   keep playing while the reviewer types. The pin lands on the captured
+   timestamp, not on wherever the song happens to be when they hit save. */
+function openCommentSheet() {
+  if (!state.ready) return;
+  const capturedT = state.ws.getCurrentTime();
+
+  openSheet(`
+    <div class="sheet-ts">At ${fmtTime(capturedT)}</div>
+    <h3 class="sheet-title">Drop a note</h3>
+    <textarea id="commentInput" placeholder="What did you hear?" autocomplete="off"></textarea>
+    <div class="sheet-actions">
+      <button class="btn-cancel" id="cmtCancel">Cancel</button>
+      <button class="btn-confirm" id="cmtSave">Pin it</button>
+    </div>
+  `);
+
+  const input = $('#commentInput');
+  // delay focus so the sheet animation finishes
+  setTimeout(() => input.focus(), 250);
+
+  $('#cmtCancel').onclick = closeSheet;
+  $('#cmtSave').onclick = () => {
+    const text = input.value.trim();
+    if (!text) {
+      input.focus();
+      return;
+    }
+    addCommentAt(capturedT, text);
+    closeSheet();
+  };
+  // Enter to save (Cmd/Ctrl+Enter on textarea also works)
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      $('#cmtSave').click();
+    }
+  });
+}
+
+/* — View comment sheet (creator) — */
+function openCommentViewSheet(c) {
+  openSheet(`
+    <div class="sheet-ts">At ${fmtTime(c.t)}</div>
+    <h3 class="sheet-title">Note</h3>
+    <div class="sheet-text">${escapeHtml(c.c)}</div>
+    <div class="sheet-actions">
+      <button class="btn-confirm" id="closeView">Got it</button>
+    </div>
+  `);
+  $('#closeView').onclick = closeSheet;
+}
+
+/* — Share sheet (reviewer) — */
+function openShareSheet() {
+  if (state.comments.length === 0) {
+    toast('Add a note first');
+    return;
+  }
+  const payload = encodePayload(state.filename, state.comments);
+  const url = `${location.origin}${location.pathname}#${payload}`;
+
+  // Warn if URL is getting huge
+  const sizeWarn = url.length > 6000
+    ? `<div class="share-hint" style="color:#ff8a8a; text-transform:none; letter-spacing:0.02em; margin-top:14px;">Heads up: this link is ${url.length.toLocaleString()} characters. Some chat apps may truncate very long URLs.</div>`
+    : '';
+
+  openSheet(`
+    <div class="sheet-ts">${state.comments.length} note${state.comments.length===1?'':'s'} · ${escapeHtml(state.filename)}</div>
+    <h3 class="sheet-title">Share your review</h3>
+    <div style="color:var(--ink-dim); font-size:14px; line-height:1.55; margin-bottom:6px;">
+      The recipient will need to open the same audio file on their device. Only your notes travel in the link.
+    </div>
+    <div class="share-link-box">
+      <input type="text" id="shareLink" readonly value="${escapeHtml(url)}">
+      <button class="copy-btn" id="copyBtn">${ICONS.copy}<span>Copy</span></button>
+    </div>
+    ${sizeWarn}
+    <div class="sheet-actions">
+      <button class="btn-cancel" id="shareClose">Done</button>
+    </div>
+  `);
+
+  const linkEl = $('#shareLink');
+  // Auto-select on focus for easy manual copy
+  linkEl.addEventListener('focus', () => linkEl.select());
+
+  $('#copyBtn').onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch (e) {
+      // Fallback for older / insecure contexts
+      linkEl.select();
+      document.execCommand('copy');
+    }
+    const btn = $('#copyBtn');
+    btn.classList.add('copied');
+    btn.innerHTML = `${ICONS.check}<span>Copied</span>`;
+    toast('Link copied');
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = `${ICONS.copy}<span>Copy</span>`;
+    }, 2200);
+  };
+  $('#shareClose').onclick = closeSheet;
+}
+
+/* ============================================================
+   GO
+   ============================================================ */
+window.addEventListener('DOMContentLoaded', boot);
+
+// Re-decode if hash changes (e.g. user pastes a new link into address bar)
+window.addEventListener('hashchange', () => {
+  if (state.ws) { try { state.ws.destroy(); } catch (e) {} state.ws = null; }
+  state.file = null;
+  state.ready = false;
+  state.activePinIdx = null;
+  $('#controls').classList.add('hidden');
+  boot();
+});
+
+// Prevent accidental pull-to-refresh on the waveform area on mobile
+document.body.addEventListener('touchmove', (e) => {
+  if (e.target.closest('#waveform')) {
+    // allow seek but prevent over-scroll
+  }
+}, { passive: true });
+</script>
+</body>
+</html>
