@@ -862,6 +862,87 @@
     transition: border 0.2s;
   }
   .sheet textarea:focus { border-color: var(--accent); }
+
+  /* Reaction picker — quick-pin emoji row */
+  .reactions {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+    margin: 14px 0 4px;
+  }
+  .reaction-btn {
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--bg-2);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    padding: 0;
+    /* Use system emoji font so all platforms get their native rendering */
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  }
+  .reaction-btn:active {
+    transform: scale(0.88);
+    background: var(--bg-1);
+    border-color: var(--accent);
+  }
+  /* Brief flash when a reaction lands */
+  .reaction-btn.flash {
+    background: var(--accent);
+    border-color: var(--accent);
+    transform: scale(1.08);
+  }
+  .reactions-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-faint);
+    margin-bottom: 6px;
+  }
+  .or-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 14px 0 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-faint);
+  }
+  .or-divider::before,
+  .or-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+
+  /* Smaller emoji pin knob — when comment is reaction-only */
+  .pin .knob.emoji-knob {
+    background: var(--bg);
+    font-size: 14px;
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+    letter-spacing: 0;
+  }
+  .pin:active .knob.emoji-knob, .pin.active .knob.emoji-knob {
+    background: var(--bg);
+    transform: translateX(-50%) scale(1.18);
+  }
+
+  /* Comment row: emoji-prefixed comments get a slightly different ts treatment */
+  .comment .text .reaction-glyph {
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+    font-size: 26px;
+    line-height: 1;
+    display: inline-block;
+  }
   .sheet-actions {
     display: flex; gap: 10px;
     margin-top: 14px;
@@ -1067,6 +1148,27 @@ const state = {
   isPlaying: false,
   activePinIdx: null,
 };
+
+/* Preset reactions — quick-pin emojis that skip the text input.
+   Each reaction's `c` field is just the emoji character, so it round-trips
+   cleanly through the same comment data structure as typed notes. */
+const REACTIONS = [
+  { emoji: '🔥', label: 'Fire' },
+  { emoji: '👍', label: 'Good' },
+  { emoji: '👎', label: 'Not it' },
+  { emoji: '💀', label: 'Dead' },
+  { emoji: '🎯', label: 'Nailed it' },
+  { emoji: '❓', label: 'Confused' },
+  { emoji: '⚠️', label: 'Issue' },
+  { emoji: '💡', label: 'Idea' },
+];
+
+/* Detect if a comment is "reaction-only" — a single emoji we recognize.
+   Used to decide whether to show the emoji on the pin knob instead of a number. */
+function reactionFor(text) {
+  const trimmed = text.trim();
+  return REACTIONS.find(r => r.emoji === trimmed) || null;
+}
 
 /* ---------- Utilities ---------- */
 function fmtTime(s) {
@@ -1486,13 +1588,17 @@ function renderPins() {
     .sort((a,b) => a.t - b.t)
     .forEach((c, displayIdx) => {
       const pct = (c.t / state.duration) * 100;
+      const reaction = reactionFor(c.c);
       const pin = document.createElement('div');
       pin.className = 'pin';
       pin.style.left = pct + '%';
       pin.dataset.idx = c._idx;
+      // Reaction-only comments get the emoji on the knob; otherwise the index number.
+      const knobContent = reaction ? reaction.emoji : (displayIdx + 1);
+      const knobClass = reaction ? 'knob emoji-knob' : 'knob';
       pin.innerHTML = `
         <div class="stem"></div>
-        <div class="knob">${displayIdx + 1}</div>
+        <div class="${knobClass}">${knobContent}</div>
       `;
       pin.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1517,18 +1623,24 @@ function renderComments() {
 
   if (sorted.length === 0) {
     list.innerHTML = state.mode === 'reviewer'
-      ? `<div class="empty">Play the track and tap “Pin comment” to drop a note at any moment</div>`
+      ? `<div class="empty">Play the track and tap "Pin" to react or drop a note at any moment</div>`
       : `<div class="empty">No notes on this track</div>`;
   } else {
-    list.innerHTML = sorted.map(c => `
-      <div class="comment" data-idx="${c._idx}">
-        <div class="ts">${fmtTime(c.t)}</div>
-        <div class="text">${escapeHtml(c.c)}</div>
-        ${state.mode === 'reviewer'
-          ? `<button class="del" data-idx="${c._idx}" aria-label="Delete">${ICONS.trash}</button>`
-          : ''}
-      </div>
-    `).join('');
+    list.innerHTML = sorted.map(c => {
+      const reaction = reactionFor(c.c);
+      const textHtml = reaction
+        ? `<span class="reaction-glyph">${reaction.emoji}</span>`
+        : escapeHtml(c.c);
+      return `
+        <div class="comment" data-idx="${c._idx}">
+          <div class="ts">${fmtTime(c.t)}</div>
+          <div class="text">${textHtml}</div>
+          ${state.mode === 'reviewer'
+            ? `<button class="del" data-idx="${c._idx}" aria-label="Delete">${ICONS.trash}</button>`
+            : ''}
+        </div>
+      `;
+    }).join('');
   }
 
   // Wire up tap-to-seek
@@ -1816,9 +1928,19 @@ function openCommentSheet() {
   if (!state.ready) return;
   const capturedT = state.ws.getCurrentTime();
 
+  const reactionsHtml = REACTIONS.map(r => `
+    <button class="reaction-btn" data-emoji="${r.emoji}" aria-label="${r.label}" title="${r.label}">${r.emoji}</button>
+  `).join('');
+
   openSheet(`
     <div class="sheet-ts">At ${fmtTime(capturedT)}</div>
     <h3 class="sheet-title">Drop a note</h3>
+
+    <div class="reactions-label">Quick react</div>
+    <div class="reactions" id="reactionsRow">${reactionsHtml}</div>
+
+    <div class="or-divider">or write</div>
+
     <textarea id="commentInput" placeholder="What did you hear?" autocomplete="off"></textarea>
     <div class="sheet-actions">
       <button class="btn-cancel" id="cmtCancel">Cancel</button>
@@ -1829,6 +1951,17 @@ function openCommentSheet() {
   const input = $('#commentInput');
   // delay focus so the sheet animation finishes
   setTimeout(() => input.focus(), 250);
+
+  // Wire up quick-react buttons: tap to instantly pin + close
+  $$('#reactionsRow .reaction-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const emoji = btn.dataset.emoji;
+      // Brief visual flash before closing
+      btn.classList.add('flash');
+      addCommentAt(capturedT, emoji);
+      setTimeout(() => closeSheet(), 140);
+    });
+  });
 
   $('#cmtCancel').onclick = closeSheet;
   $('#cmtSave').onclick = () => {
@@ -1851,10 +1984,17 @@ function openCommentSheet() {
 
 /* — View comment sheet (creator) — */
 function openCommentViewSheet(c) {
+  const reaction = reactionFor(c.c);
+  const bodyHtml = reaction
+    ? `<div class="sheet-text" style="text-align:center; padding: 18px 0 10px;">
+         <div style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; font-size: 96px; line-height: 1;">${reaction.emoji}</div>
+       </div>`
+    : `<div class="sheet-text">${escapeHtml(c.c)}</div>`;
+
   openSheet(`
     <div class="sheet-ts">At ${fmtTime(c.t)}</div>
-    <h3 class="sheet-title">Note</h3>
-    <div class="sheet-text">${escapeHtml(c.c)}</div>
+    <h3 class="sheet-title">${reaction ? 'Reaction' : 'Note'}</h3>
+    ${bodyHtml}
     <div class="sheet-actions">
       <button class="btn-confirm" id="closeView">Got it</button>
     </div>
