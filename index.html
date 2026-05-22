@@ -124,7 +124,11 @@
     font-size: 22px;
     letter-spacing: -0.02em;
     font-style: italic;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
   }
+  .logo:hover { opacity: 0.85; }
   .logo-dot {
     width: 10px; height: 10px;
     border-radius: 50%;
@@ -1142,10 +1146,10 @@
 <div class="app">
 
   <header class="header">
-    <div class="logo">
+    <a class="logo" href="/" id="logo" aria-label="Back to home">
       <span class="logo-dot"></span>
       <span>Tape</span>
-    </div>
+    </a>
     <div class="mode-tag" id="modeTag">- -</div>
   </header>
 
@@ -1309,6 +1313,40 @@ function getFileDuration(file) {
     };
     audio.src = url;
   });
+}
+
+/* ============================================================
+   RESET + HOME
+   ============================================================ */
+function resetApp() {
+  closeSheet();
+  if (state.ws) { try { state.ws.destroy(); } catch (e) {} state.ws = null; }
+  state.file = null;
+  state.filename = null;
+  state.duration = 0;
+  state.comments = [];
+  state.expectedName = null;
+  state.expectedDuration = null;
+  state.ready = false;
+  state.isPlaying = false;
+  state.activePinIdx = null;
+  state.mode = null;
+  $('#controls').classList.add('hidden');
+}
+
+function goHome() {
+  const onHomePath = location.pathname === '/' || location.pathname.endsWith('/index.html');
+  if (!onHomePath) {
+    location.href = '/';
+    return;
+  }
+  if (location.hash) {
+    location.hash = '';
+    return;
+  }
+  if (!state.ws && !state.file) return;
+  resetApp();
+  boot();
 }
 
 /* ============================================================
@@ -2124,14 +2162,16 @@ function openFinalizeSheet() {
 /* ============================================================
    GO
    ============================================================ */
-window.addEventListener('DOMContentLoaded', boot);
+window.addEventListener('DOMContentLoaded', () => {
+  boot();
+  $('#logo').addEventListener('click', (e) => {
+    e.preventDefault();
+    goHome();
+  });
+});
 
 window.addEventListener('hashchange', () => {
-  if (state.ws) { try { state.ws.destroy(); } catch (e) {} state.ws = null; }
-  state.file = null;
-  state.ready = false;
-  state.activePinIdx = null;
-  $('#controls').classList.add('hidden');
+  resetApp();
   boot();
 });
 
